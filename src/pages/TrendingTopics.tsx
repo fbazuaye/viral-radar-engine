@@ -1,5 +1,6 @@
 import { TrendingUp, ExternalLink, Eye, ThumbsUp, Loader2 } from "lucide-react";
 import { useTrends } from "@/hooks/useChannelData";
+import { ScanTrendsButton } from "@/components/dashboard/ScanTrendsButton";
 
 const TrendingTopics = () => {
   const { data: trends = [], isLoading } = useTrends();
@@ -14,12 +15,15 @@ const TrendingTopics = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <TrendingUp className="h-6 w-6 text-primary" />
-          Viral Topic Finder
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">Trending topics across YouTube right now</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
+            <TrendingUp className="h-6 w-6 text-primary" />
+            Viral Topic Finder
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">Trending topics across YouTube right now</p>
+        </div>
+        <ScanTrendsButton />
       </div>
 
       {!trends.length ? (
