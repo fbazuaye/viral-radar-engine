@@ -15,8 +15,8 @@ export const TIER_TOKENS: Record<string, number> = {
   agency: 10000,
 };
 
-export const TOKEN_PACKS = [
+export const TOKEN_PACKS: Array<{ tokens: number; price: number; label: string; popular?: boolean }> = [
   { tokens: 100, price: 5, label: "100 Tokens" },
   { tokens: 500, price: 20, label: "500 Tokens", popular: true },
   { tokens: 2000, price: 69, label: "2,000 Tokens" },
-] as const;
+];
