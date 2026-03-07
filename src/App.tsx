@@ -4,7 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/layout/AppLayout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { lazy, Suspense } from "react";
 
 const Auth = lazy(() => import("./pages/Auth"));
@@ -30,38 +32,42 @@ const Loading = () => (
   </div>
 );
 
-const LayoutRoute = ({ children }: { children: React.ReactNode }) => (
-  <AppLayout>{children}</AppLayout>
+const Protected = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>
+    <AppLayout>{children}</AppLayout>
+  </ProtectedRoute>
 );
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Suspense fallback={<Loading />}>
-            <Routes>
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<LayoutRoute><Dashboard /></LayoutRoute>} />
-              <Route path="/viral-radar" element={<LayoutRoute><ViralRadar /></LayoutRoute>} />
-              <Route path="/trending" element={<LayoutRoute><TrendingTopics /></LayoutRoute>} />
-              <Route path="/keywords" element={<LayoutRoute><KeywordExplorer /></LayoutRoute>} />
-              <Route path="/title-optimizer" element={<LayoutRoute><TitleOptimizer /></LayoutRoute>} />
-              <Route path="/idea-generator" element={<LayoutRoute><IdeaGenerator /></LayoutRoute>} />
-              <Route path="/competitors" element={<LayoutRoute><Competitors /></LayoutRoute>} />
-              <Route path="/thumbnails" element={<LayoutRoute><Thumbnails /></LayoutRoute>} />
-              <Route path="/feed" element={<LayoutRoute><CreatorFeed /></LayoutRoute>} />
-              <Route path="/scripts" element={<LayoutRoute><ScriptGenerator /></LayoutRoute>} />
-              <Route path="/content-gaps" element={<LayoutRoute><ContentGaps /></LayoutRoute>} />
-              <Route path="/pricing" element={<LayoutRoute><Pricing /></LayoutRoute>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Suspense fallback={<Loading />}>
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+                <Route path="/viral-radar" element={<Protected><ViralRadar /></Protected>} />
+                <Route path="/trending" element={<Protected><TrendingTopics /></Protected>} />
+                <Route path="/keywords" element={<Protected><KeywordExplorer /></Protected>} />
+                <Route path="/title-optimizer" element={<Protected><TitleOptimizer /></Protected>} />
+                <Route path="/idea-generator" element={<Protected><IdeaGenerator /></Protected>} />
+                <Route path="/competitors" element={<Protected><Competitors /></Protected>} />
+                <Route path="/thumbnails" element={<Protected><Thumbnails /></Protected>} />
+                <Route path="/feed" element={<Protected><CreatorFeed /></Protected>} />
+                <Route path="/scripts" element={<Protected><ScriptGenerator /></Protected>} />
+                <Route path="/content-gaps" element={<Protected><ContentGaps /></Protected>} />
+                <Route path="/pricing" element={<Protected><Pricing /></Protected>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

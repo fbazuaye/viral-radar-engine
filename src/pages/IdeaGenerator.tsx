@@ -1,16 +1,37 @@
-import { Lightbulb, Sparkles, Bookmark } from "lucide-react";
+import { Lightbulb, Sparkles, Bookmark, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
-const mockIdeas = [
-  { title: "I Let AI Run My YouTube Channel for 30 Days — Here's What Happened", category: "Experiment", difficulty: "Medium" },
-  { title: "The $0 YouTube Setup That Gets More Views Than $10K Studios", category: "Budget", difficulty: "Easy" },
-  { title: "YouTube's Secret Algorithm Change Nobody Is Talking About", category: "News", difficulty: "Easy" },
-  { title: "I Interviewed the Top 10 Growing Channels — They All Do THIS", category: "Analysis", difficulty: "Hard" },
-];
+interface VideoIdea {
+  title: string;
+  category: string;
+  difficulty: string;
+}
 
 const IdeaGenerator = () => {
   const [niche, setNiche] = useState("");
+  const [ideas, setIdeas] = useState<VideoIdea[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!niche.trim()) return;
+    setLoading(true);
+    setIdeas([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-ideas", {
+        body: { niche: niche.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setIdeas(data.ideas || []);
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to generate ideas", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -27,16 +48,24 @@ const IdeaGenerator = () => {
           type="text"
           value={niche}
           onChange={(e) => setNiche(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
           placeholder="Enter your niche or keyword (e.g., tech reviews, cooking)..."
           className="flex-1 h-10 px-4 rounded-lg border border-input bg-card text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
         />
-        <Button className="gradient-primary text-primary-foreground gap-2">
-          <Sparkles className="h-4 w-4" /> Generate
+        <Button onClick={handleGenerate} disabled={loading || !niche.trim()} className="gradient-primary text-primary-foreground gap-2">
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          Generate
         </Button>
       </div>
 
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {mockIdeas.map((idea, i) => (
+        {ideas.map((idea, i) => (
           <div key={i} className="rounded-xl border border-border bg-card p-5 group hover:glow-primary transition-all">
             <div className="flex items-start justify-between mb-2">
               <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{idea.category}</span>
