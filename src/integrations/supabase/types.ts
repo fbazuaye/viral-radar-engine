@@ -14,7 +14,287 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      channels: {
+        Row: {
+          channel_id: string
+          channel_name: string
+          created_at: string
+          id: string
+          subscriber_count: number | null
+          thumbnail_url: string | null
+          updated_at: string
+          user_id: string
+          video_count: number | null
+          view_count: number | null
+        }
+        Insert: {
+          channel_id: string
+          channel_name: string
+          created_at?: string
+          id?: string
+          subscriber_count?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id: string
+          video_count?: number | null
+          view_count?: number | null
+        }
+        Update: {
+          channel_id?: string
+          channel_name?: string
+          created_at?: string
+          id?: string
+          subscriber_count?: number | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id?: string
+          video_count?: number | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
+      competitors: {
+        Row: {
+          avg_views: number | null
+          channel_id: string
+          channel_name: string
+          created_at: string
+          id: string
+          subscriber_count: number | null
+          top_video_title: string | null
+          top_video_views: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_views?: number | null
+          channel_id: string
+          channel_name: string
+          created_at?: string
+          id?: string
+          subscriber_count?: number | null
+          top_video_title?: string | null
+          top_video_views?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_views?: number | null
+          channel_id?: string
+          channel_name?: string
+          created_at?: string
+          id?: string
+          subscriber_count?: number | null
+          top_video_title?: string | null
+          top_video_views?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      insights: {
+        Row: {
+          created_at: string
+          id: string
+          input_text: string | null
+          output_data: Json
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          input_text?: string | null
+          output_data: Json
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          input_text?: string | null
+          output_data?: Json
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      keywords: {
+        Row: {
+          competition_score: number | null
+          id: string
+          keyword: string
+          related_keywords: string[] | null
+          search_volume: number | null
+          trend_direction: string | null
+          updated_at: string
+        }
+        Insert: {
+          competition_score?: number | null
+          id?: string
+          keyword: string
+          related_keywords?: string[] | null
+          search_volume?: number | null
+          trend_direction?: string | null
+          updated_at?: string
+        }
+        Update: {
+          competition_score?: number | null
+          id?: string
+          keyword?: string
+          related_keywords?: string[] | null
+          search_volume?: number | null
+          trend_direction?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      predictions: {
+        Row: {
+          competition_score: number | null
+          created_at: string
+          id: string
+          status: string | null
+          suggested_idea: string | null
+          time_window: string | null
+          topic: string
+          trend_probability: number
+        }
+        Insert: {
+          competition_score?: number | null
+          created_at?: string
+          id?: string
+          status?: string | null
+          suggested_idea?: string | null
+          time_window?: string | null
+          topic: string
+          trend_probability: number
+        }
+        Update: {
+          competition_score?: number | null
+          created_at?: string
+          id?: string
+          status?: string | null
+          suggested_idea?: string | null
+          time_window?: string | null
+          topic?: string
+          trend_probability?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          subscription_tier: string
+          updated_at: string
+          user_id: string
+          youtube_channel_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          subscription_tier?: string
+          updated_at?: string
+          user_id: string
+          youtube_channel_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          subscription_tier?: string
+          updated_at?: string
+          user_id?: string
+          youtube_channel_id?: string | null
+        }
+        Relationships: []
+      }
+      trends: {
+        Row: {
+          category: string | null
+          detected_at: string
+          id: string
+          region: string | null
+          source: string | null
+          topic: string
+          trend_score: number | null
+          velocity: number | null
+        }
+        Insert: {
+          category?: string | null
+          detected_at?: string
+          id?: string
+          region?: string | null
+          source?: string | null
+          topic: string
+          trend_score?: number | null
+          velocity?: number | null
+        }
+        Update: {
+          category?: string | null
+          detected_at?: string
+          id?: string
+          region?: string | null
+          source?: string | null
+          topic?: string
+          trend_score?: number | null
+          velocity?: number | null
+        }
+        Relationships: []
+      }
+      videos: {
+        Row: {
+          channel_id: string | null
+          comment_count: number | null
+          created_at: string
+          id: string
+          like_count: number | null
+          published_at: string | null
+          thumbnail_url: string | null
+          title: string
+          video_id: string
+          view_count: number | null
+        }
+        Insert: {
+          channel_id?: string | null
+          comment_count?: number | null
+          created_at?: string
+          id?: string
+          like_count?: number | null
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title: string
+          video_id: string
+          view_count?: number | null
+        }
+        Update: {
+          channel_id?: string | null
+          comment_count?: number | null
+          created_at?: string
+          id?: string
+          like_count?: number | null
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          video_id?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
