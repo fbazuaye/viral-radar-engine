@@ -1,6 +1,7 @@
 import { Radar, Flame, TrendingUp, Search, Zap, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePredictions } from "@/hooks/useChannelData";
+import { ScanTrendsButton } from "@/components/dashboard/ScanTrendsButton";
 import { useState, useMemo } from "react";
 
 const ViralRadar = () => {
@@ -35,12 +36,15 @@ const ViralRadar = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
-          <Radar className="h-6 w-6 text-primary" />
-          Viral Prediction Engine
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">AI-predicted topics likely to trend within the next 24-72 hours</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
+            <Radar className="h-6 w-6 text-primary" />
+            Viral Prediction Engine
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">AI-predicted topics likely to trend within the next 24-72 hours</p>
+        </div>
+        <ScanTrendsButton />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
