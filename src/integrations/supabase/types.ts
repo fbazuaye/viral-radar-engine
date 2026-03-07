@@ -218,33 +218,54 @@ export type Database = {
       trends: {
         Row: {
           category: string | null
+          comment_count: number | null
           detected_at: string
+          engagement_rate: number | null
           id: string
+          like_count: number | null
           region: string | null
           source: string | null
+          top_channel: string | null
           topic: string
+          total_views: number | null
           trend_score: number | null
           velocity: number | null
+          video_count: number | null
+          views_per_hour: number | null
         }
         Insert: {
           category?: string | null
+          comment_count?: number | null
           detected_at?: string
+          engagement_rate?: number | null
           id?: string
+          like_count?: number | null
           region?: string | null
           source?: string | null
+          top_channel?: string | null
           topic: string
+          total_views?: number | null
           trend_score?: number | null
           velocity?: number | null
+          video_count?: number | null
+          views_per_hour?: number | null
         }
         Update: {
           category?: string | null
+          comment_count?: number | null
           detected_at?: string
+          engagement_rate?: number | null
           id?: string
+          like_count?: number | null
           region?: string | null
           source?: string | null
+          top_channel?: string | null
           topic?: string
+          total_views?: number | null
           trend_score?: number | null
           velocity?: number | null
+          video_count?: number | null
+          views_per_hour?: number | null
         }
         Relationships: []
       }
