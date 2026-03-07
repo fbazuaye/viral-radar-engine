@@ -1,0 +1,12 @@
+
+ALTER TABLE public.trends 
+ADD COLUMN IF NOT EXISTS total_views bigint DEFAULT 0,
+ADD COLUMN IF NOT EXISTS views_per_hour numeric DEFAULT 0,
+ADD COLUMN IF NOT EXISTS engagement_rate numeric DEFAULT 0,
+ADD COLUMN IF NOT EXISTS like_count bigint DEFAULT 0,
+ADD COLUMN IF NOT EXISTS comment_count bigint DEFAULT 0,
+ADD COLUMN IF NOT EXISTS video_count integer DEFAULT 0,
+ADD COLUMN IF NOT EXISTS top_channel text;
+
+CREATE EXTENSION IF NOT EXISTS pg_cron WITH SCHEMA pg_catalog;
+CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
