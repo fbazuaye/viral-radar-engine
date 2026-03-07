@@ -25,6 +25,35 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Extract user from auth header for token deduction
+    const authHeader = req.headers.get("authorization");
+    let userId: string | null = null;
+    if (authHeader) {
+      const userClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user } } = await userClient.auth.getUser();
+      userId = user?.id ?? null;
+    }
+
+    // Deduct tokens
+    if (userId) {
+      const { data: success } = await supabase.rpc("deduct_tokens", {
+        _user_id: userId,
+        _amount: 5,
+        _action_type: "scan_trends",
+        _description: "Trend scan",
+      });
+      if (!success) {
+        return new Response(JSON.stringify({ error: "Insufficient tokens. Please purchase more tokens or upgrade your plan." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     // Fetch trending videos from YouTube
     const ytUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=US&maxResults=25&key=${YOUTUBE_API_KEY}`;
     const ytRes = await fetch(ytUrl);
@@ -44,9 +73,7 @@ Deno.serve(async (req) => {
         channelTitle: v.snippet.channelTitle,
         category: v.snippet.categoryId,
         tags: v.snippet.tags?.slice(0, 5) || [],
-        viewCount,
-        likeCount,
-        commentCount,
+        viewCount, likeCount, commentCount,
         publishedAt: v.snippet.publishedAt,
         vph,
         engagementRate: Math.round(engagementRate * 100) / 100,
@@ -57,10 +84,7 @@ Deno.serve(async (req) => {
     console.log(`Fetched ${videos.length} trending videos`);
 
     const videoSummary = videos
-      .map(
-        (v: any) =>
-          `"${v.title}" by ${v.channelTitle} — ${v.viewCount.toLocaleString()} views, ${v.likeCount.toLocaleString()} likes, ${v.commentCount.toLocaleString()} comments, VPH: ${v.vph.toLocaleString()}, engagement: ${v.engagementRate}%, tags: ${v.tags.join(", ")}`
-      )
+      .map((v: any) => `"${v.title}" by ${v.channelTitle} — ${v.viewCount.toLocaleString()} views, ${v.likeCount.toLocaleString()} likes, ${v.commentCount.toLocaleString()} comments, VPH: ${v.vph.toLocaleString()}, engagement: ${v.engagementRate}%, tags: ${v.tags.join(", ")}`)
       .join("\n");
 
     const systemPrompt = `You are a YouTube trend analyst. Analyze the following trending YouTube videos and extract:
@@ -72,91 +96,60 @@ For each prediction, provide trend_probability (0-100), competition_score (0-1),
 
     const aiResponse = await fetch(AI_GATEWAY, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: `Here are the current trending YouTube videos:\n\n${videoSummary}\n\nAnalyze these and extract trends and predictions.` },
         ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "save_trends_and_predictions",
-              description: "Save analyzed YouTube trends and predictions to the database",
-              parameters: {
-                type: "object",
-                properties: {
-                  trends: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        topic: { type: "string" },
-                        category: { type: "string" },
-                        trend_score: { type: "number" },
-                        velocity: { type: "number" },
-                        total_views: { type: "number" },
-                        views_per_hour: { type: "number" },
-                        engagement_rate: { type: "number" },
-                        like_count: { type: "number" },
-                        comment_count: { type: "number" },
-                        video_count: { type: "number" },
-                        top_channel: { type: "string" },
-                        source: { type: "string" },
-                        region: { type: "string" },
-                      },
-                      required: ["topic", "category", "trend_score", "velocity", "total_views", "views_per_hour", "engagement_rate", "video_count"],
-                      additionalProperties: false,
+        tools: [{
+          type: "function",
+          function: {
+            name: "save_trends_and_predictions",
+            description: "Save analyzed YouTube trends and predictions to the database",
+            parameters: {
+              type: "object",
+              properties: {
+                trends: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      topic: { type: "string" }, category: { type: "string" }, trend_score: { type: "number" },
+                      velocity: { type: "number" }, total_views: { type: "number" }, views_per_hour: { type: "number" },
+                      engagement_rate: { type: "number" }, like_count: { type: "number" }, comment_count: { type: "number" },
+                      video_count: { type: "number" }, top_channel: { type: "string" }, source: { type: "string" }, region: { type: "string" },
                     },
-                  },
-                  predictions: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        topic: { type: "string" },
-                        trend_probability: { type: "number" },
-                        competition_score: { type: "number" },
-                        suggested_idea: { type: "string" },
-                        time_window: { type: "string" },
-                        status: { type: "string" },
-                      },
-                      required: ["topic", "trend_probability", "competition_score", "suggested_idea", "time_window"],
-                      additionalProperties: false,
-                    },
+                    required: ["topic", "category", "trend_score", "velocity", "total_views", "views_per_hour", "engagement_rate", "video_count"],
+                    additionalProperties: false,
                   },
                 },
-                required: ["trends", "predictions"],
-                additionalProperties: false,
+                predictions: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      topic: { type: "string" }, trend_probability: { type: "number" }, competition_score: { type: "number" },
+                      suggested_idea: { type: "string" }, time_window: { type: "string" }, status: { type: "string" },
+                    },
+                    required: ["topic", "trend_probability", "competition_score", "suggested_idea", "time_window"],
+                    additionalProperties: false,
+                  },
+                },
               },
+              required: ["trends", "predictions"],
+              additionalProperties: false,
             },
           },
-        ],
-        tool_choice: {
-          type: "function",
-          function: { name: "save_trends_and_predictions" },
-        },
+        }],
+        tool_choice: { type: "function", function: { name: "save_trends_and_predictions" } },
       }),
     });
 
     if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI usage limit reached. Please add credits in Settings → Workspace → Usage." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+      if (aiResponse.status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (aiResponse.status === 402) return new Response(JSON.stringify({ error: "AI usage limit reached." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       const errText = await aiResponse.text();
       console.error("AI gateway error:", aiResponse.status, errText);
       throw new Error(`AI gateway error: ${aiResponse.status}`);
@@ -169,49 +162,29 @@ For each prediction, provide trend_probability (0-100), competition_score (0-1),
     const parsed = JSON.parse(toolCall.function.arguments);
     const { trends, predictions } = parsed;
 
-    console.log(`AI extracted ${trends.length} trends and ${predictions.length} predictions`);
-
-    // Clear old data and insert new
     await supabase.from("trends").delete().neq("id", "00000000-0000-0000-0000-000000000000");
     await supabase.from("predictions").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
     const trendRows = trends.map((t: any) => ({
-      topic: t.topic,
-      category: t.category || null,
-      trend_score: t.trend_score,
-      velocity: t.velocity,
-      source: t.source || "youtube",
-      region: t.region || "US",
-      total_views: t.total_views || 0,
-      views_per_hour: t.views_per_hour || 0,
-      engagement_rate: t.engagement_rate || 0,
-      like_count: t.like_count || 0,
-      comment_count: t.comment_count || 0,
-      video_count: t.video_count || 0,
+      topic: t.topic, category: t.category || null, trend_score: t.trend_score, velocity: t.velocity,
+      source: t.source || "youtube", region: t.region || "US", total_views: t.total_views || 0,
+      views_per_hour: t.views_per_hour || 0, engagement_rate: t.engagement_rate || 0,
+      like_count: t.like_count || 0, comment_count: t.comment_count || 0, video_count: t.video_count || 0,
       top_channel: t.top_channel || null,
     }));
 
     const predictionRows = predictions.map((p: any) => ({
-      topic: p.topic,
-      trend_probability: p.trend_probability,
-      competition_score: p.competition_score,
-      suggested_idea: p.suggested_idea,
-      time_window: p.time_window || "24-72h",
-      status: p.status || "active",
+      topic: p.topic, trend_probability: p.trend_probability, competition_score: p.competition_score,
+      suggested_idea: p.suggested_idea, time_window: p.time_window || "24-72h", status: p.status || "active",
     }));
 
     const { error: tErr } = await supabase.from("trends").insert(trendRows);
     if (tErr) console.error("Trends insert error:", tErr);
-
     const { error: pErr } = await supabase.from("predictions").insert(predictionRows);
     if (pErr) console.error("Predictions insert error:", pErr);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        trendsInserted: trendRows.length,
-        predictionsInserted: predictionRows.length,
-      }),
+      JSON.stringify({ success: true, trendsInserted: trendRows.length, predictionsInserted: predictionRows.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

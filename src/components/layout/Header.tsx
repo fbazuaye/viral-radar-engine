@@ -1,6 +1,7 @@
 import { Moon, Sun, Bell, Menu } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
+import { TokenCounter } from "./TokenCounter";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -20,6 +21,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
         </h2>
       </div>
       <div className="flex items-center gap-2">
+        <TokenCounter />
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-4 w-4" />
           <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary animate-pulse-glow" />
