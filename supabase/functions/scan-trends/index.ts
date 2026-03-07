@@ -15,67 +15,60 @@ Deno.serve(async (req) => {
 
   try {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");
-    if (!YOUTUBE_API_KEY) {
-      throw new Error("YOUTUBE_API_KEY is not configured");
-    }
+    if (!YOUTUBE_API_KEY) throw new Error("YOUTUBE_API_KEY is not configured");
 
-    // Use service role to insert into trends/predictions (no user-level RLS)
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Step 1: Fetch trending videos from YouTube
-    const categories = ["0"]; // 0 = all categories
-    const regions = ["US"];
-    const allTrendingVideos: any[] = [];
+    // Fetch trending videos from YouTube
+    const ytUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=US&maxResults=25&key=${YOUTUBE_API_KEY}`;
+    const ytRes = await fetch(ytUrl);
+    const ytData = await ytRes.json();
 
-    for (const region of regions) {
-      for (const cat of categories) {
-        const ytUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=${region}&videoCategoryId=${cat}&maxResults=25&key=${YOUTUBE_API_KEY}`;
-        const ytRes = await fetch(ytUrl);
-        const ytData = await ytRes.json();
-        if (ytData.items) {
-          allTrendingVideos.push(
-            ...ytData.items.map((v: any) => ({
-              title: v.snippet.title,
-              channelTitle: v.snippet.channelTitle,
-              category: v.snippet.categoryId,
-              tags: v.snippet.tags?.slice(0, 5) || [],
-              viewCount: parseInt(v.statistics.viewCount) || 0,
-              likeCount: parseInt(v.statistics.likeCount) || 0,
-              commentCount: parseInt(v.statistics.commentCount) || 0,
-              publishedAt: v.snippet.publishedAt,
-            }))
-          );
-        }
-      }
-    }
+    const videos = (ytData.items || []).map((v: any) => {
+      const viewCount = parseInt(v.statistics.viewCount) || 0;
+      const likeCount = parseInt(v.statistics.likeCount) || 0;
+      const commentCount = parseInt(v.statistics.commentCount) || 0;
+      const publishedAt = new Date(v.snippet.publishedAt);
+      const hoursLive = Math.max(1, (Date.now() - publishedAt.getTime()) / 3600000);
+      const vph = Math.round(viewCount / hoursLive);
+      const engagementRate = viewCount > 0 ? ((likeCount + commentCount) / viewCount) * 100 : 0;
 
-    console.log(`Fetched ${allTrendingVideos.length} trending videos`);
+      return {
+        title: v.snippet.title,
+        channelTitle: v.snippet.channelTitle,
+        category: v.snippet.categoryId,
+        tags: v.snippet.tags?.slice(0, 5) || [],
+        viewCount,
+        likeCount,
+        commentCount,
+        publishedAt: v.snippet.publishedAt,
+        vph,
+        engagementRate: Math.round(engagementRate * 100) / 100,
+        hoursLive: Math.round(hoursLive),
+      };
+    });
 
-    // Step 2: Build a summary for the AI
-    const videoSummary = allTrendingVideos
+    console.log(`Fetched ${videos.length} trending videos`);
+
+    const videoSummary = videos
       .map(
-        (v) =>
-          `"${v.title}" by ${v.channelTitle} — ${v.viewCount.toLocaleString()} views, ${v.likeCount.toLocaleString()} likes, tags: ${v.tags.join(", ")}`
+        (v: any) =>
+          `"${v.title}" by ${v.channelTitle} — ${v.viewCount.toLocaleString()} views, ${v.likeCount.toLocaleString()} likes, ${v.commentCount.toLocaleString()} comments, VPH: ${v.vph.toLocaleString()}, engagement: ${v.engagementRate}%, tags: ${v.tags.join(", ")}`
       )
       .join("\n");
 
-    // Step 3: Call Lovable AI to extract trends and predictions
     const systemPrompt = `You are a YouTube trend analyst. Analyze the following trending YouTube videos and extract:
 1. Current trending TOPICS (not individual videos) — group related videos into broader topics
-2. Predictions for topics that will trend in the next 24-72 hours based on patterns
+2. Predictions for topics that will trend in the next 24-72 hours
 
-For each trend, assess the trend_score (0-100), velocity (growth rate percentage), and categorize it.
-For each prediction, provide trend_probability (0-100), competition_score (0-1), a suggested video idea, and time_window.`;
-
-    const userPrompt = `Here are the current trending YouTube videos:\n\n${videoSummary}\n\nAnalyze these and extract trends and predictions.`;
+For each trend, provide: topic name, category, trend_score (0-100), velocity (growth %), total_views (sum of grouped videos), views_per_hour (average VPH), engagement_rate (average %), like_count (sum), comment_count (sum), video_count (how many videos in this trend), and top_channel (channel with most views in this trend).
+For each prediction, provide trend_probability (0-100), competition_score (0-1), suggested video idea, and time_window.`;
 
     const aiResponse = await fetch(AI_GATEWAY, {
       method: "POST",
@@ -87,15 +80,14 @@ For each prediction, provide trend_probability (0-100), competition_score (0-1),
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
+          { role: "user", content: `Here are the current trending YouTube videos:\n\n${videoSummary}\n\nAnalyze these and extract trends and predictions.` },
         ],
         tools: [
           {
             type: "function",
             function: {
               name: "save_trends_and_predictions",
-              description:
-                "Save analyzed YouTube trends and predictions to the database",
+              description: "Save analyzed YouTube trends and predictions to the database",
               parameters: {
                 type: "object",
                 properties: {
@@ -104,14 +96,21 @@ For each prediction, provide trend_probability (0-100), competition_score (0-1),
                     items: {
                       type: "object",
                       properties: {
-                        topic: { type: "string", description: "The trending topic name" },
-                        category: { type: "string", description: "Category like Tech, Entertainment, Gaming, etc." },
-                        trend_score: { type: "number", description: "Score 0-100 indicating how trending this topic is" },
-                        velocity: { type: "number", description: "Growth rate percentage" },
-                        source: { type: "string", description: "Source: youtube" },
-                        region: { type: "string", description: "Region code like US, global" },
+                        topic: { type: "string" },
+                        category: { type: "string" },
+                        trend_score: { type: "number" },
+                        velocity: { type: "number" },
+                        total_views: { type: "number" },
+                        views_per_hour: { type: "number" },
+                        engagement_rate: { type: "number" },
+                        like_count: { type: "number" },
+                        comment_count: { type: "number" },
+                        video_count: { type: "number" },
+                        top_channel: { type: "string" },
+                        source: { type: "string" },
+                        region: { type: "string" },
                       },
-                      required: ["topic", "category", "trend_score", "velocity"],
+                      required: ["topic", "category", "trend_score", "velocity", "total_views", "views_per_hour", "engagement_rate", "video_count"],
                       additionalProperties: false,
                     },
                   },
@@ -120,12 +119,12 @@ For each prediction, provide trend_probability (0-100), competition_score (0-1),
                     items: {
                       type: "object",
                       properties: {
-                        topic: { type: "string", description: "Predicted trending topic" },
-                        trend_probability: { type: "number", description: "Probability 0-100 of trending" },
-                        competition_score: { type: "number", description: "Competition 0-1 (0=low, 1=high)" },
-                        suggested_idea: { type: "string", description: "A video idea for this predicted trend" },
-                        time_window: { type: "string", description: "When it will trend: 24h, 48h, or 72h" },
-                        status: { type: "string", description: "Status: active" },
+                        topic: { type: "string" },
+                        trend_probability: { type: "number" },
+                        competition_score: { type: "number" },
+                        suggested_idea: { type: "string" },
+                        time_window: { type: "string" },
+                        status: { type: "string" },
                       },
                       required: ["topic", "trend_probability", "competition_score", "suggested_idea", "time_window"],
                       additionalProperties: false,
@@ -165,16 +164,14 @@ For each prediction, provide trend_probability (0-100), competition_score (0-1),
 
     const aiData = await aiResponse.json();
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      throw new Error("AI did not return structured output");
-    }
+    if (!toolCall) throw new Error("AI did not return structured output");
 
     const parsed = JSON.parse(toolCall.function.arguments);
     const { trends, predictions } = parsed;
 
     console.log(`AI extracted ${trends.length} trends and ${predictions.length} predictions`);
 
-    // Step 4: Clear old data and insert new
+    // Clear old data and insert new
     await supabase.from("trends").delete().neq("id", "00000000-0000-0000-0000-000000000000");
     await supabase.from("predictions").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
@@ -185,6 +182,13 @@ For each prediction, provide trend_probability (0-100), competition_score (0-1),
       velocity: t.velocity,
       source: t.source || "youtube",
       region: t.region || "US",
+      total_views: t.total_views || 0,
+      views_per_hour: t.views_per_hour || 0,
+      engagement_rate: t.engagement_rate || 0,
+      like_count: t.like_count || 0,
+      comment_count: t.comment_count || 0,
+      video_count: t.video_count || 0,
+      top_channel: t.top_channel || null,
     }));
 
     const predictionRows = predictions.map((p: any) => ({
