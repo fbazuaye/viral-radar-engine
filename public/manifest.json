@@ -1,0 +1,17 @@
+{
+  "name": "CreatorPulse AI",
+  "short_name": "CreatorPulse",
+  "description": "AI-Powered YouTube Creator Intelligence Platform",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#7c3aed",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
