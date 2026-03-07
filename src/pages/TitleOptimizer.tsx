@@ -81,7 +81,7 @@ const TitleOptimizer = () => {
             <div className="flex items-center gap-3 shrink-0">
               <span className="text-sm font-display font-bold text-primary">{o.score}/100</span>
               <Button variant="ghost" size="icon" onClick={() => handleCopy(o.title, i)}>
-                {copied === i ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                {copied === i ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
           </div>
