@@ -180,7 +180,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t border-border px-6 py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} CreatorPulse. All rights reserved.
+        © {new Date().getFullYear()} YTRadar. All rights reserved.
       </footer>
     </div>
   );
