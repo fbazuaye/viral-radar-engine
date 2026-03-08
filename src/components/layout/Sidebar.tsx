@@ -15,8 +15,8 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
-  Zap,
 } from "lucide-react";
+import ytradarLogo from "@/assets/ytradar-logo.png";
 import { cn } from "@/lib/utils";
 
 const navItems = [
