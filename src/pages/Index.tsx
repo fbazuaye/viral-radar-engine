@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Zap, Radar, TrendingUp, Lightbulb, FileText, BarChart3, Search, Check, Coins } from "lucide-react";
+import { Radar, TrendingUp, Lightbulb, FileText, BarChart3, Search, Check, Coins } from "lucide-react";
+import radarLogo from "@/assets/radar-logo.png";
 import { cn } from "@/lib/utils";
 import { TIER_TOKENS } from "@/lib/tokenCosts";
 
@@ -58,7 +59,7 @@ const Index = () => {
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 md:px-12">
         <div className="flex items-center gap-2">
-          <Zap className="h-6 w-6 text-primary fill-primary" />
+          <img src={radarLogo} alt="YTRadar" className="h-8 w-8 drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]" />
           <span className="text-xl font-bold tracking-tight font-['Space_Grotesk']">
             YTRadar
           </span>
