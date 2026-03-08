@@ -15,9 +15,9 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import radarLogo from "@/assets/radar-logo.png";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -47,7 +47,7 @@ export const Sidebar = () => {
     >
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 px-4 border-b border-sidebar-border">
-        <img src={radarLogo} alt="YTRadar" className="h-8 w-8 shrink-0 brightness-125 drop-shadow-[0_0_12px_hsl(var(--primary)/0.9)] [filter:drop-shadow(0_0_20px_hsl(var(--primary)/0.6))_drop-shadow(0_0_40px_hsl(var(--primary)/0.3))_brightness(1.25)]" />
+        <Zap className="h-6 w-6 shrink-0 text-primary fill-primary" />
         {!collapsed && (
           <span className="font-display text-lg font-bold text-sidebar-foreground">
             YTRadar

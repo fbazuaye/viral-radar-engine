@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Loader2 } from "lucide-react";
-import radarLogo from "@/assets/radar-logo.png";
+import { Mail, Lock, User, Loader2, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,7 +52,7 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <img src={radarLogo} alt="YTRadar" className="h-12 w-12 brightness-125 [filter:drop-shadow(0_0_14px_hsl(var(--primary)/0.9))_drop-shadow(0_0_28px_hsl(var(--primary)/0.6))_drop-shadow(0_0_56px_hsl(var(--primary)/0.3))_brightness(1.25)]" />
+          <Zap className="h-9 w-9 text-primary fill-primary" />
           <span className="font-display text-2xl font-bold text-foreground">YTRadar</span>
         </div>
 
