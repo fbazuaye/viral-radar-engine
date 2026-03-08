@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Zap, TrendingUp, Lightbulb, FileText, BarChart3, Search, Check, Coins } from "lucide-react";
+import { Radar, TrendingUp, Lightbulb, FileText, BarChart3, Search, Check, Coins } from "lucide-react";
+import ytradarLogo from "@/assets/ytradar-logo.png";
 import { cn } from "@/lib/utils";
 import { TIER_TOKENS } from "@/lib/tokenCosts";
 
 const features = [
-  { icon: Zap, title: "Viral Radar", desc: "Detect trending content before it peaks" },
+  { icon: Radar, title: "Viral Radar", desc: "Detect trending content before it peaks" },
   { icon: TrendingUp, title: "Trend Predictions", desc: "AI-powered trend forecasting" },
   { icon: Lightbulb, title: "Idea Generator", desc: "Unlimited content ideas on demand" },
   { icon: FileText, title: "Script Writer", desc: "AI scripts tailored to your style" },
@@ -58,7 +59,7 @@ const Index = () => {
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 md:px-12">
         <div className="flex items-center gap-2">
-          <Zap className="h-7 w-7 text-primary" />
+          <img src={ytradarLogo} alt="YTRadar" className="h-8 w-8 object-contain" />
           <span className="text-xl font-bold tracking-tight font-['Space_Grotesk']">
             YTRadar
           </span>
