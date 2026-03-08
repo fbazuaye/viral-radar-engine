@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { TIER_TOKENS } from "@/lib/tokenCosts";
 
 const features = [
-  { icon: Zap, title: "Viral Radar", desc: "Detect trending content before it peaks" },
+  { icon: Radar, title: "Viral Radar", desc: "Detect trending content before it peaks" },
   { icon: TrendingUp, title: "Trend Predictions", desc: "AI-powered trend forecasting" },
   { icon: Lightbulb, title: "Idea Generator", desc: "Unlimited content ideas on demand" },
   { icon: FileText, title: "Script Writer", desc: "AI scripts tailored to your style" },
