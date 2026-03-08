@@ -60,7 +60,7 @@ const Index = () => {
         <div className="flex items-center gap-2">
           <Zap className="h-7 w-7 text-primary" />
           <span className="text-xl font-bold tracking-tight font-['Space_Grotesk']">
-            CreatorPulse
+            YTRadar
           </span>
         </div>
         <div className="flex items-center gap-3">
