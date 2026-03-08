@@ -5,44 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-async function generateImage(description: string, apiKey: string): Promise<string | null> {
-  try {
-    // Try the OpenAI-compatible images endpoint
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-3-pro-image-preview",
-        prompt: `YouTube thumbnail image, 16:9 aspect ratio. ${description}. Eye-catching, professional, optimized for clicks. No text overlay.`,
-        n: 1,
-        response_format: "b64_json",
-      }),
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error("Image generation failed:", response.status, errText.slice(0, 300));
-      return null;
-    }
-
-    const data = await response.json();
-    
-    // Standard OpenAI images response format
-    const imageData = data.data?.[0];
-    if (imageData?.b64_json) {
-      return `data:image/png;base64,${imageData.b64_json}`;
-    }
-    if (imageData?.url) {
-      return imageData.url;
-    }
-
-    console.error("No image data in response:", JSON.stringify(data).slice(0, 500));
-    return null;
-  } catch (e) {
-    console.error("Image generation error:", e);
-    return null;
-  }
-}
 
 async function uploadBase64ToStorage(
   supabase: any,
