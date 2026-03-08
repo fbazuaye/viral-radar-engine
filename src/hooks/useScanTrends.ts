@@ -8,7 +8,10 @@ export const useScanTrends = () => {
   return useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.functions.invoke("scan-trends");
-      if (error) throw error;
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       return data;
     },

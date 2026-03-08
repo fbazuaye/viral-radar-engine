@@ -39,7 +39,10 @@ export const useYouTubeSearch = () => {
       const { data, error } = await supabase.functions.invoke("youtube-search", {
         body: { query, maxResults: 15 },
       });
-      if (error) throw error;
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       return data as YouTubeSearchResponse;
     },

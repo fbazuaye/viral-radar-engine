@@ -28,7 +28,10 @@ const ScriptGenerator = () => {
       const { data, error } = await supabase.functions.invoke("generate-script", {
         body: { topic: topic.trim() },
       });
-      if (error) throw error;
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       setScript({ hook: data.hook, sections: data.sections || [] });
     } catch (e: any) {
