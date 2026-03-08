@@ -5,6 +5,86 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function generateImage(description: string, apiKey: string): Promise<string | null> {
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-3-pro-image-preview",
+        modalities: ["text", "image"],
+        messages: [
+          { role: "user", content: `Generate a YouTube thumbnail image (16:9 aspect ratio, 1280x720). ${description}. Make it eye-catching, professional, and optimized for clicks. Do not include any text overlay in the image.` }
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Image generation failed:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const parts = data.choices?.[0]?.message?.content;
+
+    // Handle array content (multimodal response)
+    if (Array.isArray(parts)) {
+      for (const part of parts) {
+        if (part.type === "image_url" && part.image_url?.url) {
+          // Could be a data URI or regular URL
+          return part.image_url.url;
+        }
+      }
+    }
+
+    // Handle inline_data format
+    const inlineData = data.choices?.[0]?.message?.inline_data;
+    if (inlineData?.data) {
+      return `data:${inlineData.mime_type || "image/png"};base64,${inlineData.data}`;
+    }
+
+    console.error("No image data in response:", JSON.stringify(data).slice(0, 500));
+    return null;
+  } catch (e) {
+    console.error("Image generation error:", e);
+    return null;
+  }
+}
+
+async function uploadBase64ToStorage(
+  supabase: any,
+  base64DataUri: string,
+  path: string
+): Promise<string | null> {
+  try {
+    // Extract base64 data from data URI
+    const matches = base64DataUri.match(/^data:([^;]+);base64,(.+)$/);
+    if (!matches) return base64DataUri; // It's already a URL, return as-is
+
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+    const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+
+    const { error } = await supabase.storage
+      .from("thumbnail-images")
+      .upload(path, bytes, { contentType: mimeType, upsert: true });
+
+    if (error) {
+      console.error("Storage upload error:", error);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("thumbnail-images")
+      .getPublicUrl(path);
+
+    return urlData?.publicUrl ?? null;
+  } catch (e) {
+    console.error("Upload error:", e);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -29,6 +109,7 @@ Deno.serve(async (req) => {
       if (!success) return new Response(JSON.stringify({ error: "Insufficient tokens. Please purchase more tokens or upgrade your plan." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Step 1: Generate text concepts
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
@@ -81,6 +162,25 @@ Deno.serve(async (req) => {
     const data = await response.json();
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     const result = toolCall ? JSON.parse(toolCall.function.arguments) : { concepts: [] };
+
+    // Step 2: Generate images for each concept in parallel
+    const timestamp = Date.now();
+    const imagePromises = result.concepts.map(async (concept: any, index: number) => {
+      const imageDataUri = await generateImage(
+        `${concept.style} thumbnail: ${concept.desc}. Color palette: ${concept.colors}.`,
+        LOVABLE_API_KEY
+      );
+
+      if (imageDataUri) {
+        const storagePath = `${userId || "anon"}/${timestamp}-${index}.png`;
+        const publicUrl = await uploadBase64ToStorage(supabase, imageDataUri, storagePath);
+        if (publicUrl) {
+          concept.imageUrl = publicUrl;
+        }
+      }
+    });
+
+    await Promise.all(imagePromises);
 
     return new Response(JSON.stringify(result), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
