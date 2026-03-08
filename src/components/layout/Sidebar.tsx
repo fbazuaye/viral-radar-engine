@@ -48,7 +48,7 @@ export const Sidebar = () => {
     >
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 px-4 border-b border-sidebar-border">
-        <img src={ytradarLogo} alt="YTRadar" className="h-9 w-9 shrink-0 object-contain brightness-150 drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+        <Zap className="h-6 w-6 shrink-0 text-primary fill-primary" />
         {!collapsed && (
           <span className="font-display text-lg font-bold text-sidebar-foreground">
             YTRadar

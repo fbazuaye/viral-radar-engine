@@ -58,7 +58,7 @@ const Index = () => {
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 md:px-12">
         <div className="flex items-center gap-2">
-          <img src={ytradarLogo} alt="YTRadar" className="h-9 w-9 object-contain brightness-150 drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+          <Zap className="h-6 w-6 text-primary fill-primary" />
           <span className="text-xl font-bold tracking-tight font-['Space_Grotesk']">
             YTRadar
           </span>
