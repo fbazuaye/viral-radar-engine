@@ -25,34 +25,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Extract user from auth header for token deduction
-    const authHeader = req.headers.get("authorization");
-    let userId: string | null = null;
-    if (authHeader) {
-      const userClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_PUBLISHABLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY")!,
-        { global: { headers: { Authorization: authHeader } } }
-      );
-      const { data: { user } } = await userClient.auth.getUser();
-      userId = user?.id ?? null;
-    }
-
-    // Deduct tokens
-    if (userId) {
-      const { data: success } = await supabase.rpc("deduct_tokens", {
-        _user_id: userId,
-        _amount: 5,
-        _action_type: "scan_trends",
-        _description: "Trend scan",
-      });
-      if (!success) {
-        return new Response(JSON.stringify({ error: "Insufficient tokens. Please purchase more tokens or upgrade your plan." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
+    // No token deduction for scan-trends — it populates shared data
 
     // Fetch trending videos from YouTube
     const ytUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&chart=mostPopular&regionCode=US&maxResults=25&key=${YOUTUBE_API_KEY}`;
