@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Radar, TrendingUp, Lightbulb, FileText, BarChart3, Search, Check, Coins } from "lucide-react";
-import radarLogo from "@/assets/radar-logo.png";
+import { Radar, TrendingUp, Lightbulb, FileText, BarChart3, Search, Check, Coins, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TIER_TOKENS } from "@/lib/tokenCosts";
 
