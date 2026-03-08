@@ -17,7 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import ytradarLogo from "@/assets/ytradar-logo.png";
+import { cn } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 const navItems = [
