@@ -5,41 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-
-async function uploadBase64ToStorage(
-  supabase: any,
-  base64DataUri: string,
-  path: string
-): Promise<string | null> {
-  try {
-    // Extract base64 data from data URI
-    const matches = base64DataUri.match(/^data:([^;]+);base64,(.+)$/);
-    if (!matches) return base64DataUri; // It's already a URL, return as-is
-
-    const mimeType = matches[1];
-    const base64Data = matches[2];
-    const bytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-
-    const { error } = await supabase.storage
-      .from("thumbnail-images")
-      .upload(path, bytes, { contentType: mimeType, upsert: true });
-
-    if (error) {
-      console.error("Storage upload error:", error);
-      return null;
-    }
-
-    const { data: urlData } = supabase.storage
-      .from("thumbnail-images")
-      .getPublicUrl(path);
-
-    return urlData?.publicUrl ?? null;
-  } catch (e) {
-    console.error("Upload error:", e);
-    return null;
-  }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -64,7 +29,6 @@ Deno.serve(async (req) => {
       if (!success) return new Response(JSON.stringify({ error: "Insufficient tokens. Please purchase more tokens or upgrade your plan." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Step 1: Generate text concepts
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
@@ -89,7 +53,7 @@ Deno.serve(async (req) => {
                     properties: {
                       style: { type: "string", description: "Short style name e.g. Split Comparison" },
                       desc: { type: "string", description: "Visual description of the thumbnail layout and elements" },
-                      colors: { type: "string", description: "Recommended color palette" },
+                      colors: { type: "string", description: "Recommended color palette as 2-3 hex codes separated by commas, e.g. #FF0000, #00FF00" },
                       textOverlay: { type: "string", description: "Suggested bold text overlay for the thumbnail" }
                     },
                     required: ["style", "desc", "colors", "textOverlay"],
@@ -117,25 +81,6 @@ Deno.serve(async (req) => {
     const data = await response.json();
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     const result = toolCall ? JSON.parse(toolCall.function.arguments) : { concepts: [] };
-
-    // Step 2: Generate images for each concept in parallel
-    const timestamp = Date.now();
-    const imagePromises = result.concepts.map(async (concept: any, index: number) => {
-      const imageDataUri = await generateImage(
-        `${concept.style} thumbnail: ${concept.desc}. Color palette: ${concept.colors}.`,
-        LOVABLE_API_KEY
-      );
-
-      if (imageDataUri) {
-        const storagePath = `${userId || "anon"}/${timestamp}-${index}.png`;
-        const publicUrl = await uploadBase64ToStorage(supabase, imageDataUri, storagePath);
-        if (publicUrl) {
-          concept.imageUrl = publicUrl;
-        }
-      }
-    });
-
-    await Promise.all(imagePromises);
 
     return new Response(JSON.stringify(result), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
