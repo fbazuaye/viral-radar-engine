@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Image, Sparkles, Palette, Type, Layers, Loader2 } from "lucide-react";
+import { Image, Sparkles, Palette, Type, Layers, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
