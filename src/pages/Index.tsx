@@ -83,7 +83,7 @@ const Index = () => {
           <span className="text-primary"> data-driven</span> content
         </h1>
         <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground">
-          CreatorPulse gives you the AI tools to find trends, optimize titles, generate scripts, and outsmart competitors — all in one dashboard.
+          YTRadar gives you the AI tools to find trends, optimize titles, generate scripts, and outsmart competitors — all in one dashboard.
         </p>
         <div className="flex items-center justify-center gap-4">
           <Link to="/auth?tab=signup">
