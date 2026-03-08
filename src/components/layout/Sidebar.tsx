@@ -12,12 +12,12 @@ import {
   FileText,
   Target,
   Radar,
-  Zap,
   CreditCard,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import radarLogo from "@/assets/radar-logo.png";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
