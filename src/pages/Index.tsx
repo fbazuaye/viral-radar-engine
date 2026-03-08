@@ -59,7 +59,7 @@ const Index = () => {
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 md:px-12">
         <div className="flex items-center gap-2">
-          <img src={radarLogo} alt="YTRadar" className="h-8 w-8 drop-shadow-[0_0_6px_hsl(var(--primary)/0.6)]" />
+          <img src={radarLogo} alt="YTRadar" className="h-9 w-9 brightness-125 [filter:drop-shadow(0_0_12px_hsl(var(--primary)/0.9))_drop-shadow(0_0_24px_hsl(var(--primary)/0.6))_drop-shadow(0_0_48px_hsl(var(--primary)/0.3))_brightness(1.25)]" />
           <span className="text-xl font-bold tracking-tight font-['Space_Grotesk']">
             YTRadar
           </span>
