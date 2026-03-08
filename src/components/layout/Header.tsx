@@ -35,7 +35,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    navigate("/auth");
+    navigate("/");
   };
 
   return (
