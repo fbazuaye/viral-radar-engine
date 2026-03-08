@@ -1,6 +1,6 @@
 {
-  "name": "CreatorPulse AI",
-  "short_name": "CreatorPulse",
+  "name": "YTRadar",
+  "short_name": "YTRadar",
   "description": "AI-Powered YouTube Creator Intelligence Platform",
   "start_url": "/dashboard",
   "display": "standalone",

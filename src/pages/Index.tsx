@@ -60,7 +60,7 @@ const Index = () => {
         <div className="flex items-center gap-2">
           <Zap className="h-7 w-7 text-primary" />
           <span className="text-xl font-bold tracking-tight font-['Space_Grotesk']">
-            CreatorPulse
+            YTRadar
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -83,7 +83,7 @@ const Index = () => {
           <span className="text-primary"> data-driven</span> content
         </h1>
         <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground">
-          CreatorPulse gives you the AI tools to find trends, optimize titles, generate scripts, and outsmart competitors — all in one dashboard.
+          YTRadar gives you the AI tools to find trends, optimize titles, generate scripts, and outsmart competitors — all in one dashboard.
         </p>
         <div className="flex items-center justify-center gap-4">
           <Link to="/auth?tab=signup">
@@ -180,7 +180,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t border-border px-6 py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} CreatorPulse. All rights reserved.
+        © {new Date().getFullYear()} YTRadar. All rights reserved.
       </footer>
     </div>
   );

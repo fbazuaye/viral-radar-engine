@@ -45,7 +45,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
           <Menu className="h-5 w-5" />
         </Button>
         <h2 className="font-display text-lg font-semibold text-foreground">
-          CreatorPulse AI
+          YTRadar
         </h2>
       </div>
       <div className="flex items-center gap-2">
