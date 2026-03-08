@@ -53,7 +53,7 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <img src={ytradarLogo} alt="YTRadar" className="h-10 w-10 object-contain" />
+          <img src={ytradarLogo} alt="YTRadar" className="h-11 w-11 object-contain brightness-150 drop-shadow-[0_0_10px_hsl(var(--primary)/0.6)]" />
           <span className="font-display text-2xl font-bold text-foreground">YTRadar</span>
         </div>
 
