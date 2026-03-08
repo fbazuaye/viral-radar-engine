@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, Loader2, Zap } from "lucide-react";
+import { Mail, Lock, User, Loader2 } from "lucide-react";
+import radarLogo from "@/assets/radar-logo.png";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
