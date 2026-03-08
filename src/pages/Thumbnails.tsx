@@ -98,13 +98,39 @@ const Thumbnails = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {concepts.map((c, i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-5">
-              <div className="h-40 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
+              <div className="relative h-40 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden group">
                 {c.imageUrl ? (
-                  <img
-                    src={c.imageUrl}
-                    alt={c.style}
-                    className="w-full h-full object-cover rounded-lg"
-                  />
+                  <>
+                    <img
+                      src={c.imageUrl}
+                      alt={c.style}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <a
+                      href={c.imageUrl}
+                      download={`thumbnail-${i + 1}.png`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute top-2 right-2 p-1.5 rounded-md bg-background/80 border border-border text-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        try {
+                          const res = await fetch(c.imageUrl!);
+                          const blob = await res.blob();
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `thumbnail-${c.style.toLowerCase().replace(/\s+/g, "-")}.png`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        } catch {
+                          toast.error("Failed to download image");
+                        }
+                      }}
+                    >
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </>
                 ) : (
                   <Layers className="h-8 w-8 text-muted-foreground/40" />
                 )}
