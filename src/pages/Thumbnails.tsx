@@ -56,6 +56,25 @@ const Thumbnails = () => {
     }
   };
 
+  const handleDownload = async (concept: ThumbnailConcept) => {
+    if (!concept.imageUrl) return;
+    try {
+      const res = await fetch(concept.imageUrl);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `thumbnail-${concept.style.toLowerCase().replace(/\s+/g, "-")}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Thumbnail downloaded!");
+    } catch {
+      toast.error("Failed to download thumbnail");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -77,7 +96,7 @@ const Thumbnails = () => {
         />
         <Button onClick={handleGenerate} disabled={loading} className="gradient-primary text-primary-foreground gap-2">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {loading ? "Generating..." : "Generate"}
+          {loading ? "Generating images..." : "Generate"}
         </Button>
       </div>
 
@@ -98,8 +117,25 @@ const Thumbnails = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {concepts.map((c, i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-5">
-              <div className="relative h-40 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
-                <Layers className="h-8 w-8 text-muted-foreground/40" />
+              <div className="relative group h-40 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
+                {c.imageUrl ? (
+                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-cover" />
+                ) : (
+                  <Layers className="h-8 w-8 text-muted-foreground/40" />
+                )}
+                {c.imageUrl && (
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="gap-1.5"
+                      onClick={() => handleDownload(c)}
+                    >
+                      <Download className="h-4 w-4" />
+                      Download
+                    </Button>
+                  </div>
+                )}
               </div>
               <h3 className="font-display font-semibold text-card-foreground mb-2">{c.style}</h3>
               <p className="text-sm text-muted-foreground mb-3">{c.desc}</p>
