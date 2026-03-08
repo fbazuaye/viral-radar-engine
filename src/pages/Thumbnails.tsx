@@ -5,12 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ThumbnailConcept {
   style: string;
   desc: string;
   colors: string;
   textOverlay: string;
+  imageUrl?: string;
 }
 
 const defaultConcepts: ThumbnailConcept[] = [
@@ -61,7 +63,7 @@ const Thumbnails = () => {
           <Image className="h-6 w-6 text-primary" />
           Thumbnail Idea Generator
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">AI-generated thumbnail concepts for maximum CTR</p>
+        <p className="text-sm text-muted-foreground mt-1">AI-generated thumbnail concepts with images for maximum CTR</p>
       </div>
 
       <div className="flex gap-3">
@@ -79,21 +81,44 @@ const Thumbnails = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {concepts.map((c, i) => (
-          <div key={i} className="rounded-xl border border-border bg-card p-5">
-            <div className="h-32 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4">
-              <Layers className="h-8 w-8 text-muted-foreground/40" />
+      {loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-5">
+              <Skeleton className="h-40 w-full rounded-lg mb-4" />
+              <Skeleton className="h-5 w-1/2 mb-2" />
+              <Skeleton className="h-4 w-full mb-3" />
+              <Skeleton className="h-3 w-3/4" />
             </div>
-            <h3 className="font-display font-semibold text-card-foreground mb-2">{c.style}</h3>
-            <p className="text-sm text-muted-foreground mb-3">{c.desc}</p>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><Palette className="h-3 w-3" /> {c.colors}</span>
-              <span className="flex items-center gap-1"><Type className="h-3 w-3" /> "{c.textOverlay}"</span>
+          ))}
+        </div>
+      )}
+
+      {!loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {concepts.map((c, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-5">
+              <div className="h-40 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
+                {c.imageUrl ? (
+                  <img
+                    src={c.imageUrl}
+                    alt={c.style}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                ) : (
+                  <Layers className="h-8 w-8 text-muted-foreground/40" />
+                )}
+              </div>
+              <h3 className="font-display font-semibold text-card-foreground mb-2">{c.style}</h3>
+              <p className="text-sm text-muted-foreground mb-3">{c.desc}</p>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><Palette className="h-3 w-3" /> {c.colors}</span>
+                <span className="flex items-center gap-1"><Type className="h-3 w-3" /> "{c.textOverlay}"</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
