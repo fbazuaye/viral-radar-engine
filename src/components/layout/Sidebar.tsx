@@ -12,6 +12,7 @@ import {
   FileText,
   Target,
   Radar,
+  Zap,
   CreditCard,
   ChevronLeft,
   ChevronRight,
