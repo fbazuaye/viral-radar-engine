@@ -25,7 +25,10 @@ const TitleOptimizer = () => {
       const { data, error } = await supabase.functions.invoke("optimize-title", {
         body: { title: title.trim() },
       });
-      if (error) throw error;
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       setResults(data.titles || []);
     } catch (e: any) {

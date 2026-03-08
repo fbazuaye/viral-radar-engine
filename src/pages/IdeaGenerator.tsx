@@ -24,7 +24,10 @@ const IdeaGenerator = () => {
       const { data, error } = await supabase.functions.invoke("generate-ideas", {
         body: { niche: niche.trim() },
       });
-      if (error) throw error;
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       setIdeas(data.ideas || []);
     } catch (e: any) {
