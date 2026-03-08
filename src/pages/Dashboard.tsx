@@ -1,9 +1,10 @@
-import { Eye, Users, TrendingUp, ThumbsUp, Play, Clock, Loader2 } from "lucide-react";
+import { Eye, Users, TrendingUp, ThumbsUp, Play, Clock, Loader2, Radio } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { ViralRadarCard } from "@/components/dashboard/ViralRadarCard";
 import { EngagementChart } from "@/components/dashboard/EngagementChart";
 import { ConnectChannel } from "@/components/dashboard/ConnectChannel";
-import { useChannel, useVideos } from "@/hooks/useChannelData";
+import { ScanTrendsButton } from "@/components/dashboard/ScanTrendsButton";
+import { useChannel, useVideos, useTrends } from "@/hooks/useChannelData";
 
 const formatCount = (n: number | null | undefined): string => {
   if (!n) return "0";
@@ -15,6 +16,7 @@ const formatCount = (n: number | null | undefined): string => {
 const Dashboard = () => {
   const { data: channel, isLoading: chLoading } = useChannel();
   const { data: videos = [], isLoading: vidLoading } = useVideos(channel?.id);
+  const { data: trends = [] } = useTrends();
 
   const isLoading = chLoading || vidLoading;
 
@@ -35,9 +37,18 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">Your channel intelligence at a glance</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
+            Your channel intelligence at a glance
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
+              <Radio className="h-3 w-3 animate-pulse" />
+              Live
+            </span>
+          </p>
+        </div>
+        <ScanTrendsButton />
       </div>
 
       {!channel && <ConnectChannel />}
@@ -50,7 +61,7 @@ const Dashboard = () => {
             <StatCard title="Videos" value={videoCount.toString()} change={`${videos.length} synced`} changeType="neutral" icon={Play} />
             <StatCard title="Engagement" value={`${avgEngagement}%`} change="likes / views" changeType="neutral" icon={ThumbsUp} />
             <StatCard title="Total Likes" value={formatCount(totalLikes)} change="across all videos" changeType="up" icon={TrendingUp} />
-            <StatCard title="Video Views" value={formatCount(totalWatchViews)} change="synced videos" changeType="up" icon={Clock} />
+            <StatCard title="Trending Topics" value={trends.length.toString()} change="active trends" changeType="up" icon={Clock} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
