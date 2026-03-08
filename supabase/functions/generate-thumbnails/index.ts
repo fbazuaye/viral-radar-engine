@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
                     properties: {
                       style: { type: "string", description: "Short style name e.g. Split Comparison" },
                       desc: { type: "string", description: "Visual description of the thumbnail layout and elements" },
-                      colors: { type: "string", description: "Recommended color palette" },
+                      colors: { type: "string", description: "Recommended color palette as 2-3 hex codes separated by commas, e.g. #FF0000, #00FF00" },
                       textOverlay: { type: "string", description: "Suggested bold text overlay for the thumbnail" }
                     },
                     required: ["style", "desc", "colors", "textOverlay"],
