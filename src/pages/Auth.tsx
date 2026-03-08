@@ -53,7 +53,7 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-8">
-          <img src={radarLogo} alt="YTRadar" className="h-10 w-10 drop-shadow-[0_0_8px_hsl(var(--primary)/0.6)]" />
+          <img src={radarLogo} alt="YTRadar" className="h-12 w-12 brightness-125 [filter:drop-shadow(0_0_14px_hsl(var(--primary)/0.9))_drop-shadow(0_0_28px_hsl(var(--primary)/0.6))_drop-shadow(0_0_56px_hsl(var(--primary)/0.3))_brightness(1.25)]" />
           <span className="font-display text-2xl font-bold text-foreground">YTRadar</span>
         </div>
 
