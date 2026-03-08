@@ -7,40 +7,33 @@ const corsHeaders = {
 
 async function generateImage(description: string, apiKey: string): Promise<string | null> {
   try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Try the OpenAI-compatible images endpoint
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-3-pro-image-preview",
-        modalities: ["text", "image"],
-        messages: [
-          { role: "user", content: `Generate a YouTube thumbnail image (16:9 aspect ratio, 1280x720). ${description}. Make it eye-catching, professional, and optimized for clicks. Do not include any text overlay in the image.` }
-        ],
+        prompt: `YouTube thumbnail image, 16:9 aspect ratio. ${description}. Eye-catching, professional, optimized for clicks. No text overlay.`,
+        n: 1,
+        response_format: "b64_json",
       }),
     });
 
     if (!response.ok) {
-      console.error("Image generation failed:", response.status);
+      const errText = await response.text();
+      console.error("Image generation failed:", response.status, errText.slice(0, 300));
       return null;
     }
 
     const data = await response.json();
-    const parts = data.choices?.[0]?.message?.content;
-
-    // Handle array content (multimodal response)
-    if (Array.isArray(parts)) {
-      for (const part of parts) {
-        if (part.type === "image_url" && part.image_url?.url) {
-          // Could be a data URI or regular URL
-          return part.image_url.url;
-        }
-      }
+    
+    // Standard OpenAI images response format
+    const imageData = data.data?.[0];
+    if (imageData?.b64_json) {
+      return `data:image/png;base64,${imageData.b64_json}`;
     }
-
-    // Handle inline_data format
-    const inlineData = data.choices?.[0]?.message?.inline_data;
-    if (inlineData?.data) {
-      return `data:${inlineData.mime_type || "image/png"};base64,${inlineData.data}`;
+    if (imageData?.url) {
+      return imageData.url;
     }
 
     console.error("No image data in response:", JSON.stringify(data).slice(0, 500));
