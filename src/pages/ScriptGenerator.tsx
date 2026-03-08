@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 interface ScriptSection {
   title: string;
@@ -27,7 +28,10 @@ const ScriptGenerator = () => {
       const { data, error } = await supabase.functions.invoke("generate-script", {
         body: { topic: topic.trim() },
       });
-      if (error) throw error;
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       setScript({ hook: data.hook, sections: data.sections || [] });
     } catch (e: any) {

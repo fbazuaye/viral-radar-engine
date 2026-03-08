@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 interface OptimizedTitle {
   title: string;
@@ -24,7 +25,10 @@ const TitleOptimizer = () => {
       const { data, error } = await supabase.functions.invoke("optimize-title", {
         body: { title: title.trim() },
       });
-      if (error) throw error;
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       setResults(data.titles || []);
     } catch (e: any) {

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 interface VideoIdea {
   title: string;
@@ -23,7 +24,10 @@ const IdeaGenerator = () => {
       const { data, error } = await supabase.functions.invoke("generate-ideas", {
         body: { niche: niche.trim() },
       });
-      if (error) throw error;
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       setIdeas(data.ideas || []);
     } catch (e: any) {
