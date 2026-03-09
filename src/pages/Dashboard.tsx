@@ -52,6 +52,8 @@ const Dashboard = () => {
         <ScanTrendsButton />
       </div>
 
+      <SearchHistory />
+
       {!channel && <ConnectChannel />}
 
       {channel && (
@@ -74,7 +76,6 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <SearchHistory />
           <ConnectChannel />
         </>
       )}
