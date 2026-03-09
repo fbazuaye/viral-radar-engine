@@ -3,11 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const useSearchHistory = () => {
-  const { user } = useAuth();
+  const { session } = useAuth();
 
   return useQuery({
-    queryKey: ["search-history", user?.id],
-    enabled: !!user,
+    queryKey: ["search-history", session?.user?.id],
+    enabled: !!session?.user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("insights")
