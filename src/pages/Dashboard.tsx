@@ -4,6 +4,7 @@ import { ViralRadarCard } from "@/components/dashboard/ViralRadarCard";
 import { EngagementChart } from "@/components/dashboard/EngagementChart";
 import { ConnectChannel } from "@/components/dashboard/ConnectChannel";
 import { ScanTrendsButton } from "@/components/dashboard/ScanTrendsButton";
+import { SearchHistory } from "@/components/dashboard/SearchHistory";
 import { useChannel, useVideos, useTrends } from "@/hooks/useChannelData";
 
 const formatCount = (n: number | null | undefined): string => {
