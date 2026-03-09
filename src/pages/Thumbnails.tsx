@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Image, Sparkles, Palette, Type, Layers, Loader2, Download, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Image, Sparkles, Palette, Type, Layers, Loader2, Download, History, ChevronDown, ChevronUp, Monitor, Instagram, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
@@ -8,6 +8,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInsightsHistory } from "@/hooks/useInsightsHistory";
 import { formatDistanceToNow } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface ThumbnailConcept {
   style: string;
@@ -17,12 +23,54 @@ interface ThumbnailConcept {
   imageUrl?: string;
 }
 
+const platformExports = [
+  { label: "YouTube (1280×720)", width: 1280, height: 720, icon: Monitor },
+  { label: "Instagram (1080×1080)", width: 1080, height: 1080, icon: Instagram },
+  { label: "Twitter/X (1600×900)", width: 1600, height: 900, icon: Twitter },
+];
+
 const defaultConcepts: ThumbnailConcept[] = [
   { style: "Split Comparison", desc: "Before/After with bold dividing line, shocked face on one side", colors: "Red + Yellow", textOverlay: "SHOCKING RESULTS" },
   { style: "Minimalist Focus", desc: "Clean background, single product in center, large bold text", colors: "Black + White + Accent", textOverlay: "The ONE Tool" },
   { style: "Reaction Style", desc: "Expressive face close-up with glowing overlay and emoji", colors: "Purple gradient", textOverlay: "I CAN'T BELIEVE THIS" },
   { style: "Data Visualization", desc: "Chart/graph background with highlighted metric and arrow", colors: "Dark blue + Green", textOverlay: "+500% GROWTH" },
 ];
+
+const resizeAndDownload = async (imageUrl: string, width: number, height: number, fileName: string) => {
+  try {
+    const res = await fetch(imageUrl);
+    const blob = await res.blob();
+    const img = await createImageBitmap(blob);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
+
+    // Cover-fit: scale and center-crop
+    const scale = Math.max(width / img.width, height / img.height);
+    const scaledW = img.width * scale;
+    const scaledH = img.height * scale;
+    const offsetX = (width - scaledW) / 2;
+    const offsetY = (height - scaledH) / 2;
+    ctx.drawImage(img, offsetX, offsetY, scaledW, scaledH);
+
+    canvas.toBlob((outputBlob) => {
+      if (!outputBlob) return;
+      const url = URL.createObjectURL(outputBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(`Downloaded at ${width}×${height}!`);
+    }, "image/png");
+  } catch {
+    toast.error("Failed to download thumbnail");
+  }
+};
 
 const Thumbnails = () => {
   const [topic, setTopic] = useState("");
@@ -64,25 +112,6 @@ const Thumbnails = () => {
     }
   };
 
-  const handleDownload = async (concept: ThumbnailConcept) => {
-    if (!concept.imageUrl) return;
-    try {
-      const res = await fetch(concept.imageUrl);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `thumbnail-${concept.style.toLowerCase().replace(/\s+/g, "-")}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("Thumbnail downloaded!");
-    } catch {
-      toast.error("Failed to download thumbnail");
-    }
-  };
-
   const loadFromHistory = (item: any) => {
     const data = item.output_data as ThumbnailConcept[];
     if (Array.isArray(data)) {
@@ -99,7 +128,7 @@ const Thumbnails = () => {
           <Image className="h-6 w-6 text-primary" />
           Thumbnail Idea Generator
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">AI-generated thumbnail concepts with images for maximum CTR</p>
+        <p className="text-sm text-muted-foreground mt-1">AI-generated thumbnail concepts with images optimized for YouTube (1280×720) and social media</p>
       </div>
 
       <div className="flex gap-3">
@@ -141,16 +170,36 @@ const Thumbnails = () => {
                   <Layers className="h-8 w-8 text-muted-foreground/40" />
                 )}
                 {c.imageUrl && (
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="gap-1.5"
-                      onClick={() => handleDownload(c)}
-                    >
-                      <Download className="h-4 w-4" />
-                      Download
-                    </Button>
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="secondary" className="gap-1.5">
+                          <Download className="h-4 w-4" />
+                          Export
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="center">
+                        {platformExports.map((p) => {
+                          const Icon = p.icon;
+                          return (
+                            <DropdownMenuItem
+                              key={p.label}
+                              onClick={() =>
+                                resizeAndDownload(
+                                  c.imageUrl!,
+                                  p.width,
+                                  p.height,
+                                  `thumbnail-${c.style.toLowerCase().replace(/\s+/g, "-")}-${p.width}x${p.height}.png`
+                                )
+                              }
+                            >
+                              <Icon className="h-4 w-4 mr-2" />
+                              {p.label}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 )}
               </div>
