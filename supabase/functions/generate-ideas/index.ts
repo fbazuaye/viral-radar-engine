@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     const result = toolCall ? JSON.parse(toolCall.function.arguments) : { ideas: [] };
 
     if (userId) {
-      const { error: insightError } = await supabase.from("insights").insert({ user_id: userId, type: "video_ideas", input_text: niche, output_data: result });
+      const { error: insightError } = await supabase.from("insights").insert({ user_id: userId, type: "idea", input_text: niche, output_data: result });
       if (insightError) console.error("Failed to save insight:", JSON.stringify(insightError));
       else console.log("Insight saved for user:", userId);
     }

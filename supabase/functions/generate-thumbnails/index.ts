@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
 
     // Save to insights
     if (userId) {
-      const { error: insightError } = await supabase.from("insights").insert({ user_id: userId, type: "thumbnail_ideas", input_text: topic, output_data: conceptsWithImages });
+      const { error: insightError } = await supabase.from("insights").insert({ user_id: userId, type: "thumbnail", input_text: topic, output_data: conceptsWithImages });
       if (insightError) console.error("Failed to save insight:", JSON.stringify(insightError));
       else console.log("Insight saved successfully for user:", userId);
     }
