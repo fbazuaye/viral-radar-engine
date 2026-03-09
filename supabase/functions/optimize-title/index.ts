@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     const result = toolCall ? JSON.parse(toolCall.function.arguments) : { titles: [] };
 
     if (userId) {
-      await supabase.from("insights").insert({ user_id: userId, type: "title_optimizer", input_text: title, output_data: result });
+      await supabase.from("insights").insert({ user_id: userId, type: "title", input_text: title, output_data: result });
     }
 
     return new Response(JSON.stringify(result), { headers: { ...corsHeaders, "Content-Type": "application/json" } });

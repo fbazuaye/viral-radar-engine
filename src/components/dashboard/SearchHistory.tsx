@@ -6,10 +6,10 @@ import { formatDistanceToNow } from "date-fns";
 import { Image, Lightbulb, FileText, Type, Loader2, History } from "lucide-react";
 
 const typeConfig: Record<string, { label: string; icon: typeof Image; route: string; color: string }> = {
-  thumbnail_ideas: { label: "Thumbnails", icon: Image, route: "/thumbnails", color: "bg-pink-500/10 text-pink-500" },
-  video_ideas: { label: "Ideas", icon: Lightbulb, route: "/idea-generator", color: "bg-amber-500/10 text-amber-500" },
+  thumbnail: { label: "Thumbnails", icon: Image, route: "/thumbnails", color: "bg-pink-500/10 text-pink-500" },
+  idea: { label: "Ideas", icon: Lightbulb, route: "/idea-generator", color: "bg-amber-500/10 text-amber-500" },
   script: { label: "Script", icon: FileText, route: "/script-generator", color: "bg-blue-500/10 text-blue-500" },
-  title_optimizer: { label: "Title", icon: Type, route: "/title-optimizer", color: "bg-emerald-500/10 text-emerald-500" },
+  title: { label: "Title", icon: Type, route: "/title-optimizer", color: "bg-emerald-500/10 text-emerald-500" },
 };
 
 export const SearchHistory = () => {
@@ -38,10 +38,10 @@ export const SearchHistory = () => {
       </CardHeader>
       <CardContent className="space-y-1 p-3 pt-0">
         {history.map((item) => {
-          const config = typeConfig[item.type] || typeConfig.video_ideas;
+          const config = typeConfig[item.type] || typeConfig.idea;
           const Icon = config.icon;
           const thumbnailPreview =
-            item.type === "thumbnail_ideas"
+            item.type === "thumbnail"
               ? (item.output_data as any)?.[0]?.imageUrl
               : null;
 
