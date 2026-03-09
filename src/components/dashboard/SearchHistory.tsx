@@ -38,7 +38,7 @@ export const SearchHistory = () => {
       </CardHeader>
       <CardContent className="space-y-1 p-3 pt-0">
         {history.map((item) => {
-          const config = typeConfig[item.type] || typeConfig.video_ideas;
+          const config = typeConfig[item.type] || typeConfig.idea;
           const Icon = config.icon;
           const thumbnailPreview =
             item.type === "thumbnail_ideas"
