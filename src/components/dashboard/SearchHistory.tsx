@@ -8,7 +8,7 @@ import { Image, Lightbulb, FileText, Type, Loader2, History } from "lucide-react
 const typeConfig: Record<string, { label: string; icon: typeof Image; route: string; color: string }> = {
   thumbnail: { label: "Thumbnails", icon: Image, route: "/thumbnails", color: "bg-pink-500/10 text-pink-500" },
   idea: { label: "Ideas", icon: Lightbulb, route: "/idea-generator", color: "bg-amber-500/10 text-amber-500" },
-  script: { label: "Script", icon: FileText, route: "/script-generator", color: "bg-blue-500/10 text-blue-500" },
+  script: { label: "Script", icon: FileText, route: "/scripts", color: "bg-blue-500/10 text-blue-500" },
   title: { label: "Title", icon: Type, route: "/title-optimizer", color: "bg-emerald-500/10 text-emerald-500" },
 };
 
