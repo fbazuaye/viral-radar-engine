@@ -145,6 +145,11 @@ Deno.serve(async (req) => {
 
     const conceptsWithImages = await Promise.all(imagePromises);
 
+    // Save to insights
+    if (userId) {
+      await supabase.from("insights").insert({ user_id: userId, type: "thumbnail_ideas", input_text: topic, output_data: conceptsWithImages });
+    }
+
     return new Response(JSON.stringify({ concepts: conceptsWithImages }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("generate-thumbnails error:", e);

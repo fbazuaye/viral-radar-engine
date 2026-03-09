@@ -74,6 +74,7 @@ const Dashboard = () => {
             </div>
           </div>
 
+          <SearchHistory />
           <ConnectChannel />
         </>
       )}
