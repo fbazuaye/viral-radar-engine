@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Image, Sparkles, Palette, Type, Layers, Loader2, Download } from "lucide-react";
+import { Image, Sparkles, Palette, Type, Layers, Loader2, Download, History, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useInsightsHistory } from "@/hooks/useInsightsHistory";
+import { formatDistanceToNow } from "date-fns";
 
 interface ThumbnailConcept {
   style: string;
@@ -25,8 +27,11 @@ const defaultConcepts: ThumbnailConcept[] = [
 const Thumbnails = () => {
   const [topic, setTopic] = useState("");
   const [concepts, setConcepts] = useState<ThumbnailConcept[]>(defaultConcepts);
+  const [hasGenerated, setHasGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { data: history = [] } = useInsightsHistory("thumbnail");
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -44,8 +49,11 @@ const Thumbnails = () => {
       }
       if (data?.concepts?.length) {
         setConcepts(data.concepts);
+        setHasGenerated(true);
         toast.success("Thumbnail concepts generated!");
         queryClient.invalidateQueries({ queryKey: ["token-balance"] });
+        queryClient.invalidateQueries({ queryKey: ["insights-history", "thumbnail"] });
+        queryClient.invalidateQueries({ queryKey: ["search-history"] });
       } else {
         throw new Error("No concepts returned");
       }
@@ -72,6 +80,15 @@ const Thumbnails = () => {
       toast.success("Thumbnail downloaded!");
     } catch {
       toast.error("Failed to download thumbnail");
+    }
+  };
+
+  const loadFromHistory = (item: any) => {
+    const data = item.output_data as ThumbnailConcept[];
+    if (Array.isArray(data)) {
+      setConcepts(data);
+      setHasGenerated(true);
+      setTopic(item.input_text || "");
     }
   };
 
@@ -145,6 +162,72 @@ const Thumbnails = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
+            <History className="h-5 w-5 text-muted-foreground" />
+            Past Thumbnails
+          </h2>
+          <div className="space-y-2">
+            {history.map((item) => {
+              const isExpanded = expandedHistory === item.id;
+              const data = item.output_data as any[];
+              const preview = Array.isArray(data) ? data[0]?.imageUrl : null;
+              return (
+                <div key={item.id} className="rounded-xl border border-border bg-card overflow-hidden">
+                  <button
+                    onClick={() => setExpandedHistory(isExpanded ? null : item.id)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      {preview && (
+                        <img src={preview} alt="" className="h-9 w-16 rounded object-cover shrink-0" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-card-foreground truncate">{item.input_text || "Untitled"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })} · {Array.isArray(data) ? data.length : 0} concepts
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 ml-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          loadFromHistory(item);
+                        }}
+                      >
+                        Load
+                      </Button>
+                      {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                    </div>
+                  </button>
+                  {isExpanded && Array.isArray(data) && (
+                    <div className="px-4 pb-4 border-t border-border pt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {data.map((c: any, i: number) => (
+                        <div key={i} className="space-y-1">
+                          {c.imageUrl ? (
+                            <img src={c.imageUrl} alt={c.style} className="w-full h-20 rounded object-cover" />
+                          ) : (
+                            <div className="w-full h-20 rounded bg-muted/30 flex items-center justify-center">
+                              <Layers className="h-4 w-4 text-muted-foreground/40" />
+                            </div>
+                          )}
+                          <p className="text-[10px] text-muted-foreground truncate">{c.style}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
