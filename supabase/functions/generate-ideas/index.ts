@@ -55,6 +55,10 @@ Deno.serve(async (req) => {
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     const result = toolCall ? JSON.parse(toolCall.function.arguments) : { ideas: [] };
 
+    if (userId) {
+      await supabase.from("insights").insert({ user_id: userId, type: "video_ideas", input_text: niche, output_data: result });
+    }
+
     return new Response(JSON.stringify(result), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
     console.error("generate-ideas error:", e);
