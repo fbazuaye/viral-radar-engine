@@ -1,11 +1,14 @@
-import { Radar, Flame, TrendingUp, Search, Zap, Loader2 } from "lucide-react";
+import { Radar, Flame, TrendingUp, Search, Zap, Loader2, History, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { usePredictions } from "@/hooks/useChannelData";
+import { usePredictions, useScanHistory } from "@/hooks/useChannelData";
 import { ScanTrendsButton } from "@/components/dashboard/ScanTrendsButton";
 import { useState, useMemo } from "react";
+import { format } from "date-fns";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const ViralRadar = () => {
   const { data: predictions = [], isLoading } = usePredictions();
+  const { data: scanHistory = [] } = useScanHistory();
   const [filter, setFilter] = useState("");
 
   const filtered = useMemo(() => {
@@ -15,6 +18,9 @@ const ViralRadar = () => {
       (p) => p.topic.toLowerCase().includes(q) || p.suggested_idea?.toLowerCase().includes(q)
     );
   }, [predictions, filter]);
+
+  // Past scans = all except the latest batch
+  const pastScans = useMemo(() => scanHistory.slice(1), [scanHistory]);
 
   const competitionLabel = (score: number | null): "Low" | "Medium" | "High" => {
     if (!score || score < 0.35) return "Low";
@@ -79,7 +85,7 @@ const ViralRadar = () => {
 
       {!predictions.length ? (
         <div className="rounded-xl border border-border bg-card p-8 text-center">
-          <p className="text-muted-foreground">No predictions yet. The AI engine will populate this data.</p>
+          <p className="text-muted-foreground">No predictions yet. Click "Scan Trends" to run the AI engine.</p>
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -95,53 +101,96 @@ const ViralRadar = () => {
               />
             </div>
           </div>
-          <div className="divide-y divide-border">
-            {filtered.map((p) => {
-              const prob = Number(p.trend_probability);
-              const comp = competitionLabel(p.competition_score);
-              return (
-                <div key={p.id} className="p-4 hover:bg-muted/30 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Flame className={cn("h-4 w-4", prob >= 85 ? "text-destructive" : prob >= 70 ? "text-warning" : "text-muted-foreground")} />
-                        <span className="font-medium text-card-foreground">{p.topic}</span>
-                        {p.status && <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">{p.status}</span>}
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                        <span>Competition: <span className={cn(
-                          "font-medium",
-                          comp === "Low" && "text-success",
-                          comp === "Medium" && "text-warning",
-                          comp === "High" && "text-destructive",
-                        )}>{comp}</span></span>
-                        {p.time_window && <span>Timeframe: {p.time_window}</span>}
-                      </div>
-                      {p.suggested_idea && (
-                        <div className="flex items-start gap-1.5 mt-2">
-                          <TrendingUp className="h-3 w-3 text-accent mt-0.5 shrink-0" />
-                          <p className="text-sm text-muted-foreground">{p.suggested_idea}</p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className={cn(
-                        "text-lg font-display font-bold",
-                        prob >= 85 ? "text-destructive" : prob >= 70 ? "text-warning" : "text-muted-foreground"
-                      )}>
-                        {prob}%
-                      </div>
-                      <div className="text-xs text-muted-foreground">trend score</div>
-                    </div>
+          <PredictionList items={filtered} competitionLabel={competitionLabel} />
+        </div>
+      )}
+
+      {/* Scan History */}
+      {pastScans.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
+            <History className="h-5 w-5 text-muted-foreground" />
+            Past Scans
+          </h2>
+          <div className="space-y-2">
+            {pastScans.map((scan) => (
+              <Collapsible key={scan.scannedAt}>
+                <CollapsibleTrigger className="w-full rounded-xl border border-border bg-card p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <Radar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium text-card-foreground">
+                      {format(new Date(scan.scannedAt), "MMM d, yyyy 'at' h:mm a")}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {scan.items.length} prediction{scan.items.length !== 1 ? "s" : ""}
+                    </span>
                   </div>
-                </div>
-              );
-            })}
+                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]_&]:rotate-180" />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="rounded-xl border border-border bg-card overflow-hidden mt-1">
+                    <PredictionList items={scan.items} competitionLabel={competitionLabel} />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
           </div>
         </div>
       )}
     </div>
   );
 };
+
+const PredictionList = ({
+  items,
+  competitionLabel,
+}: {
+  items: any[];
+  competitionLabel: (score: number | null) => "Low" | "Medium" | "High";
+}) => (
+  <div className="divide-y divide-border">
+    {items.map((p) => {
+      const prob = Number(p.trend_probability);
+      const comp = competitionLabel(p.competition_score);
+      return (
+        <div key={p.id} className="p-4 hover:bg-muted/30 transition-colors">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className={cn("h-4 w-4", prob >= 85 ? "text-destructive" : prob >= 70 ? "text-warning" : "text-muted-foreground")} />
+                <span className="font-medium text-card-foreground">{p.topic}</span>
+                {p.status && <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">{p.status}</span>}
+              </div>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                <span>Competition: <span className={cn(
+                  "font-medium",
+                  comp === "Low" && "text-success",
+                  comp === "Medium" && "text-warning",
+                  comp === "High" && "text-destructive",
+                )}>{comp}</span></span>
+                {p.time_window && <span>Timeframe: {p.time_window}</span>}
+              </div>
+              {p.suggested_idea && (
+                <div className="flex items-start gap-1.5 mt-2">
+                  <TrendingUp className="h-3 w-3 text-accent mt-0.5 shrink-0" />
+                  <p className="text-sm text-muted-foreground">{p.suggested_idea}</p>
+                </div>
+              )}
+            </div>
+            <div className="text-right shrink-0">
+              <div className={cn(
+                "text-lg font-display font-bold",
+                prob >= 85 ? "text-destructive" : prob >= 70 ? "text-warning" : "text-muted-foreground"
+              )}>
+                {prob}%
+              </div>
+              <div className="text-xs text-muted-foreground">trend score</div>
+            </div>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
 
 export default ViralRadar;
