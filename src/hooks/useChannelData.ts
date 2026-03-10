@@ -69,11 +69,21 @@ export const useTrends = () => {
   return useQuery({
     queryKey: ["trends"],
     queryFn: async () => {
+      // Get the latest batch timestamp
+      const { data: latest } = await supabase
+        .from("trends")
+        .select("scanned_at")
+        .order("scanned_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!latest) return [];
+
       const { data, error } = await supabase
         .from("trends")
         .select("*")
-        .order("trend_score", { ascending: false })
-        .limit(20);
+        .eq("scanned_at", latest.scanned_at)
+        .order("trend_score", { ascending: false });
       if (error) throw error;
       return data || [];
     },
@@ -86,13 +96,50 @@ export const usePredictions = () => {
   return useQuery({
     queryKey: ["predictions"],
     queryFn: async () => {
+      // Get the latest batch timestamp
+      const { data: latest } = await supabase
+        .from("predictions")
+        .select("scanned_at")
+        .order("scanned_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!latest) return [];
+
       const { data, error } = await supabase
         .from("predictions")
         .select("*")
-        .order("trend_probability", { ascending: false })
-        .limit(20);
+        .eq("scanned_at", latest.scanned_at)
+        .order("trend_probability", { ascending: false });
       if (error) throw error;
       return data || [];
+    },
+  });
+};
+
+export const useScanHistory = () => {
+  useRealtimeSub("predictions", ["scan-history"]);
+
+  return useQuery({
+    queryKey: ["scan-history"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select("*")
+        .order("scanned_at", { ascending: false });
+      if (error) throw error;
+
+      // Group by scanned_at
+      const groups: Record<string, typeof data> = {};
+      for (const row of data || []) {
+        const key = (row as any).scanned_at ?? row.created_at;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(row);
+      }
+
+      return Object.entries(groups)
+        .map(([scannedAt, items]) => ({ scannedAt, items: items.sort((a, b) => Number(b.trend_probability) - Number(a.trend_probability)) }))
+        .sort((a, b) => new Date(b.scannedAt).getTime() - new Date(a.scannedAt).getTime());
     },
   });
 };

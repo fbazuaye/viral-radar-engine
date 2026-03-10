@@ -135,20 +135,24 @@ For each prediction, provide trend_probability (0-100), competition_score (0-1),
     const parsed = JSON.parse(toolCall.function.arguments);
     const { trends, predictions } = parsed;
 
-    await supabase.from("trends").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-    await supabase.from("predictions").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    // Shared batch timestamp for this scan
+    const batchTimestamp = new Date().toISOString();
 
     const trendRows = trends.map((t: any) => ({
       topic: t.topic, category: t.category || null, trend_score: t.trend_score, velocity: t.velocity,
       source: t.source || "youtube", region: t.region || "US", total_views: t.total_views || 0,
       views_per_hour: t.views_per_hour || 0, engagement_rate: t.engagement_rate || 0,
       like_count: t.like_count || 0, comment_count: t.comment_count || 0, video_count: t.video_count || 0,
-      top_channel: t.top_channel || null,
+      top_channel: t.top_channel || null, scanned_at: batchTimestamp,
     }));
 
+    // Normalize status to a safe value
+    const validStatuses = ["active", "upcoming", "emerging", "fading", "peaked"];
     const predictionRows = predictions.map((p: any) => ({
       topic: p.topic, trend_probability: p.trend_probability, competition_score: p.competition_score,
-      suggested_idea: p.suggested_idea, time_window: p.time_window || "24-72h", status: p.status || "active",
+      suggested_idea: p.suggested_idea, time_window: p.time_window || "24-72h",
+      status: validStatuses.includes(p.status) ? p.status : "active",
+      scanned_at: batchTimestamp,
     }));
 
     const { error: tErr } = await supabase.from("trends").insert(trendRows);
