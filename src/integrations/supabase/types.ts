@@ -154,6 +154,7 @@ export type Database = {
           competition_score: number | null
           created_at: string
           id: string
+          scanned_at: string
           status: string | null
           suggested_idea: string | null
           time_window: string | null
@@ -164,6 +165,7 @@ export type Database = {
           competition_score?: number | null
           created_at?: string
           id?: string
+          scanned_at?: string
           status?: string | null
           suggested_idea?: string | null
           time_window?: string | null
@@ -174,6 +176,7 @@ export type Database = {
           competition_score?: number | null
           created_at?: string
           id?: string
+          scanned_at?: string
           status?: string | null
           suggested_idea?: string | null
           time_window?: string | null
@@ -272,6 +275,7 @@ export type Database = {
           id: string
           like_count: number | null
           region: string | null
+          scanned_at: string
           source: string | null
           top_channel: string | null
           topic: string
@@ -289,6 +293,7 @@ export type Database = {
           id?: string
           like_count?: number | null
           region?: string | null
+          scanned_at?: string
           source?: string | null
           top_channel?: string | null
           topic: string
@@ -306,6 +311,7 @@ export type Database = {
           id?: string
           like_count?: number | null
           region?: string | null
+          scanned_at?: string
           source?: string | null
           top_channel?: string | null
           topic?: string
