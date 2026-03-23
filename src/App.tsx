@@ -23,6 +23,7 @@ const CreatorFeed = lazy(() => import("./pages/CreatorFeed"));
 const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
 const ContentGaps = lazy(() => import("./pages/ContentGaps"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
