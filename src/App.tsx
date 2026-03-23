@@ -64,6 +64,7 @@ const App = () => (
                 <Route path="/scripts" element={<Protected><ScriptGenerator /></Protected>} />
                 <Route path="/content-gaps" element={<Protected><ContentGaps /></Protected>} />
                 <Route path="/pricing" element={<Protected><Pricing /></Protected>} />
+                <Route path="/admin/users" element={<Protected><AdminUsers /></Protected>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

@@ -64,7 +64,7 @@ export const Sidebar = () => {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {navItems.map((item) => {
+        {allNavItems.map((item) => {
           const isActive = location.pathname === item.to;
           return (
             <NavLink
