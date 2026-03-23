@@ -16,8 +16,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsAdmin } from "@/hooks/useAdminUsers";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
