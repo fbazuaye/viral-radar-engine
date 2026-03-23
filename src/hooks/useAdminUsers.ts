@@ -10,7 +10,7 @@ export const useIsAdmin = () => {
     queryFn: async () => {
       if (!session?.user?.id) return false;
       const { data } = await supabase
-        .from("user_roles" as any)
+        .from("user_roles")
         .select("role")
         .eq("user_id", session.user.id)
         .eq("role", "admin")
@@ -29,7 +29,7 @@ export interface AdminUser {
   youtube_channel_id: string | null;
   created_at: string;
   balance: number;
-  email?: string;
+  roles: string[];
 }
 
 export const useAdminUsers = () => {
@@ -47,11 +47,22 @@ export const useAdminUsers = () => {
         .from("token_balances")
         .select("user_id, balance");
 
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id, role");
+
       const balanceMap = new Map((balances || []).map((b) => [b.user_id, b.balance]));
+      const roleMap = new Map<string, string[]>();
+      (roles || []).forEach((r) => {
+        const existing = roleMap.get(r.user_id) || [];
+        existing.push(r.role);
+        roleMap.set(r.user_id, existing);
+      });
 
       return (profiles || []).map((p) => ({
         ...p,
         balance: balanceMap.get(p.user_id) ?? 0,
+        roles: roleMap.get(p.user_id) ?? [],
       }));
     },
   });
@@ -105,6 +116,42 @@ export const useUpdateTokens = () => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       toast.success("Token balance updated");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+};
+
+export const useGrantRole = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ user_id, role }: { user_id: string; role: string }) => {
+      const { error } = await supabase
+        .from("user_roles")
+        .insert({ user_id, role: role as any });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("Role granted");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+};
+
+export const useRevokeRole = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ user_id, role }: { user_id: string; role: string }) => {
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", user_id)
+        .eq("role", role as any);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      toast.success("Role revoked");
     },
     onError: (e: any) => toast.error(e.message),
   });

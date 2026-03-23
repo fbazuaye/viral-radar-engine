@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useIsAdmin, useAdminUsers, useUpdateProfile, useUpdateTokens, AdminUser } from "@/hooks/useAdminUsers";
+import { useState, useEffect } from "react";
+import { useIsAdmin, useAdminUsers, useUpdateProfile, useUpdateTokens, useGrantRole, useRevokeRole, AdminUser } from "@/hooks/useAdminUsers";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Users, Pencil, Coins } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Shield, Users, Pencil, Coins, ShieldCheck, ShieldAlert } from "lucide-react";
 import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const tiers = ["free", "starter", "pro", "agency"];
 
@@ -23,19 +25,39 @@ const EditUserDialog = ({
   user,
   open,
   onClose,
+  currentUserId,
 }: {
   user: AdminUser | null;
   open: boolean;
   onClose: () => void;
+  currentUserId?: string;
 }) => {
   const updateProfile = useUpdateProfile();
   const updateTokens = useUpdateTokens();
-  const [name, setName] = useState(user?.display_name || "");
-  const [tier, setTier] = useState(user?.subscription_tier || "free");
-  const [channel, setChannel] = useState(user?.youtube_channel_id || "");
-  const [tokens, setTokens] = useState(String(user?.balance ?? 0));
+  const grantRole = useGrantRole();
+  const revokeRole = useRevokeRole();
+
+  const [name, setName] = useState("");
+  const [tier, setTier] = useState("free");
+  const [channel, setChannel] = useState("");
+  const [tokens, setTokens] = useState("0");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isModerator, setIsModerator] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setName(user.display_name || "");
+      setTier(user.subscription_tier || "free");
+      setChannel(user.youtube_channel_id || "");
+      setTokens(String(user.balance ?? 0));
+      setIsAdmin(user.roles.includes("admin"));
+      setIsModerator(user.roles.includes("moderator"));
+    }
+  }, [user]);
 
   if (!user) return null;
+
+  const isSelf = user.user_id === currentUserId;
 
   const handleSave = async () => {
     await updateProfile.mutateAsync({
@@ -46,12 +68,25 @@ const EditUserDialog = ({
         youtube_channel_id: channel || undefined,
       },
     });
+
     const newBalance = parseInt(tokens, 10);
     if (!isNaN(newBalance) && newBalance !== user.balance) {
       await updateTokens.mutateAsync({ user_id: user.user_id, balance: newBalance });
     }
+
+    // Role changes
+    const hadAdmin = user.roles.includes("admin");
+    const hadMod = user.roles.includes("moderator");
+
+    if (isAdmin && !hadAdmin) await grantRole.mutateAsync({ user_id: user.user_id, role: "admin" });
+    if (!isAdmin && hadAdmin && !isSelf) await revokeRole.mutateAsync({ user_id: user.user_id, role: "admin" });
+    if (isModerator && !hadMod) await grantRole.mutateAsync({ user_id: user.user_id, role: "moderator" });
+    if (!isModerator && hadMod) await revokeRole.mutateAsync({ user_id: user.user_id, role: "moderator" });
+
     onClose();
   };
+
+  const isPending = updateProfile.isPending || updateTokens.isPending || grantRole.isPending || revokeRole.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -85,10 +120,40 @@ const EditUserDialog = ({
             <Label>Token Balance</Label>
             <Input type="number" value={tokens} onChange={(e) => setTokens(e.target.value)} min={0} />
           </div>
+
+          <div className="border-t border-border pt-4 space-y-3">
+            <Label className="text-sm font-semibold flex items-center gap-1">
+              <Shield className="h-4 w-4" /> Roles
+            </Label>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <span className="text-sm">Admin</span>
+              </div>
+              <Switch
+                checked={isAdmin}
+                onCheckedChange={setIsAdmin}
+                disabled={isSelf}
+              />
+            </div>
+            {isSelf && (
+              <p className="text-xs text-muted-foreground">You cannot remove your own admin role.</p>
+            )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-accent-foreground" />
+                <span className="text-sm">Moderator</span>
+              </div>
+              <Switch
+                checked={isModerator}
+                onCheckedChange={setIsModerator}
+              />
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave} disabled={updateProfile.isPending || updateTokens.isPending}>
+          <Button onClick={handleSave} disabled={isPending}>
             Save Changes
           </Button>
         </DialogFooter>
@@ -98,6 +163,7 @@ const EditUserDialog = ({
 };
 
 const AdminUsers = () => {
+  const { session } = useAuth();
   const { data: isAdmin, isLoading: checkingAdmin } = useIsAdmin();
   const { data: users, isLoading } = useAdminUsers();
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
@@ -150,9 +216,17 @@ const AdminUsers = () => {
                   <CardTitle className="text-sm font-medium truncate">
                     {user.display_name || "Unnamed"}
                   </CardTitle>
-                  <Badge className={tierColors[user.subscription_tier] || "bg-muted"}>
-                    {user.subscription_tier}
-                  </Badge>
+                  <div className="flex gap-1">
+                    {user.roles.includes("admin") && (
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0">admin</Badge>
+                    )}
+                    {user.roles.includes("moderator") && (
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">mod</Badge>
+                    )}
+                    <Badge className={tierColors[user.subscription_tier] || "bg-muted"}>
+                      {user.subscription_tier}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -174,7 +248,7 @@ const AdminUsers = () => {
                   className="w-full mt-2"
                   onClick={() => setEditUser(user)}
                 >
-                  <Pencil className="h-3 w-3 mr-1" /> Edit Profile
+                  <Pencil className="h-3 w-3 mr-1" /> Edit Profile & Roles
                 </Button>
               </CardContent>
             </Card>
@@ -186,6 +260,7 @@ const AdminUsers = () => {
         user={editUser}
         open={!!editUser}
         onClose={() => setEditUser(null)}
+        currentUserId={session?.user?.id}
       />
     </div>
   );
