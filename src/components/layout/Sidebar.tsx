@@ -16,8 +16,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsAdmin } from "@/hooks/useAdminUsers";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -37,6 +39,11 @@ const navItems = [
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { data: isAdmin } = useIsAdmin();
+
+  const allNavItems = isAdmin
+    ? [...navItems, { to: "/admin/users", label: "User Management", icon: Shield }]
+    : navItems;
 
   return (
     <aside
@@ -57,7 +64,7 @@ export const Sidebar = () => {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {navItems.map((item) => {
+        {allNavItems.map((item) => {
           const isActive = location.pathname === item.to;
           return (
             <NavLink

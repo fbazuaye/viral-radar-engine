@@ -23,6 +23,7 @@ const CreatorFeed = lazy(() => import("./pages/CreatorFeed"));
 const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
 const ContentGaps = lazy(() => import("./pages/ContentGaps"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -63,6 +64,7 @@ const App = () => (
                 <Route path="/scripts" element={<Protected><ScriptGenerator /></Protected>} />
                 <Route path="/content-gaps" element={<Protected><ContentGaps /></Protected>} />
                 <Route path="/pricing" element={<Protected><Pricing /></Protected>} />
+                <Route path="/admin/users" element={<Protected><AdminUsers /></Protected>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
