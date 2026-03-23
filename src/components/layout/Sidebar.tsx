@@ -39,6 +39,11 @@ const navItems = [
 export const Sidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { data: isAdmin } = useIsAdmin();
+
+  const allNavItems = isAdmin
+    ? [...navItems, { to: "/admin/users", label: "User Management", icon: Shield }]
+    : navItems;
 
   return (
     <aside
