@@ -1,47 +1,57 @@
 
 
-## Plan: Generate YTRadar Product Description & User Guide (PDF + DOCX)
+## Plan: Admin Site Traffic Analytics Dashboard
 
-### Documents to Create
+### Overview
+Add a site traffic tracking system that records page visits (with country, page, timestamp, device info) and an admin-only analytics dashboard to visualize this data.
 
-Two downloadable files in `/mnt/documents/`:
+### Database Changes
 
-1. **YTRadar_Product_Description.pdf** — A polished 2-3 page product overview covering what YTRadar is, key features, pricing tiers, and value proposition.
+**New table: `site_visits`**
+- `id` (uuid, PK)
+- `page_path` (text) — route visited
+- `country` (text, nullable) — resolved via free IP geolocation API
+- `city` (text, nullable)
+- `device_type` (text) — mobile/desktop/tablet
+- `browser` (text)
+- `referrer` (text, nullable)
+- `user_id` (uuid, nullable) — if logged in
+- `session_id` (text) — anonymous session identifier
+- `created_at` (timestamptz)
 
-2. **YTRadar_User_Guide.docx** — A comprehensive 8-10 page user guide covering all 11 features with step-by-step instructions.
+**RLS**: Public INSERT (anyone can log a visit), admin-only SELECT. No UPDATE/DELETE.
 
-### Content Outline
+### Edge Function: `track-visit`
+- Receives page_path, referrer, user_agent, session_id from the client
+- Uses the request's IP with a free geolocation service (ip-api.com) to resolve country/city
+- Parses user_agent for device_type and browser
+- Inserts into `site_visits` using service role key
+- `verify_jwt = false` so it works for anonymous visitors
 
-**Product Description (PDF via ReportLab):**
-- Hero section: "YTRadar — AI-Powered YouTube Growth Intelligence"
-- Problem statement and solution overview
-- Feature highlights (all 11 tools with one-liner descriptions)
-- Token system explanation
-- Pricing tiers (Free $0, Starter $19, Pro $49, Agency $149)
-- Call to action
+### Client-Side Tracking
+- Create a `usePageTracking` hook that fires on every route change (via `useLocation`)
+- Generates a random `session_id` in sessionStorage for anonymous tracking
+- Calls the `track-visit` edge function on each navigation
 
-**User Guide (DOCX via docx-js):**
-1. Getting Started (sign up, connect channel, dashboard overview)
-2. Dashboard — channel stats, engagement charts, recent activity
-3. Viral Radar — scan trends, prediction scores, scan history
-4. Trending Topics — browse trends, YouTube search integration
-5. Keyword Explorer — search and filter keywords
-6. Title Optimizer — generate clickability-scored titles
-7. Idea Generator — AI video ideas by niche
-8. Script Generator — full script generation with hooks and sections
-9. Thumbnail Generator — AI thumbnails with multi-platform export (YouTube 1280x720, Instagram 1080x1080, Twitter 1600x900)
-10. Competitor Tracker — monitor rival channels
-11. Content Gap Finder — identify underserved topics
-12. Creator Feed — daily AI recommendations
-13. Token System & Pricing — costs per action, plans, token packs
+### Admin Analytics Page (`/admin/analytics`)
+- Protected admin-only route (same pattern as `/admin/users`)
+- **Summary cards**: Total visits (today / 7d / 30d), unique sessions, unique countries
+- **Country breakdown**: Table sorted by visit count with country flags
+- **Top pages**: Bar chart of most visited pages (Recharts)
+- **Traffic over time**: Line chart of daily visits (Recharts)
+- **Device breakdown**: Pie chart of mobile vs desktop vs tablet
+- **Recent visits**: Scrollable table with time, page, country, device
 
-### Technical Approach
-- PDF: ReportLab with branded colors (primary purple/blue from the app)
-- DOCX: docx-js with professional styling, table of contents, headers/footers
-- QA: Convert both to images and visually verify
+### Navigation
+- Add "Site Analytics" link with `BarChart3` icon to sidebar (admin-only, alongside User Management)
+- Add route in App.tsx
 
-### Brand Colors (from codebase)
-- Primary: Electric blue/purple accent
-- Dark background theme
-- Will use a professional navy + white + accent color scheme for documents
+### Files to Create/Edit
+- **Migration**: new `site_visits` table + RLS policies
+- **New**: `supabase/functions/track-visit/index.ts`
+- **New**: `src/hooks/usePageTracking.ts`
+- **New**: `src/pages/AdminAnalytics.tsx`
+- **Edit**: `src/App.tsx` — add route
+- **Edit**: `src/components/layout/Sidebar.tsx` — add nav item
+- **Edit**: `src/components/layout/AppLayout.tsx` — mount tracking hook
 
