@@ -218,6 +218,45 @@ export type Database = {
         }
         Relationships: []
       }
+      site_visits: {
+        Row: {
+          browser: string
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string
+          id: string
+          page_path: string
+          referrer: string | null
+          session_id: string
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string
+          id?: string
+          page_path: string
+          referrer?: string | null
+          session_id: string
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string
+          id?: string
+          page_path?: string
+          referrer?: string | null
+          session_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       token_balances: {
         Row: {
           balance: number
