@@ -2,9 +2,11 @@ import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { cn } from "@/lib/utils";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 export const AppLayout = ({ children }: { children: ReactNode }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  usePageTracking();
 
   return (
     <div className="min-h-screen bg-background">

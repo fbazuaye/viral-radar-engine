@@ -43,7 +43,11 @@ export const Sidebar = () => {
   const { data: isAdmin } = useIsAdmin();
 
   const allNavItems = isAdmin
-    ? [...navItems, { to: "/admin/users", label: "User Management", icon: Shield }]
+    ? [
+        ...navItems,
+        { to: "/admin/users", label: "User Management", icon: Shield },
+        { to: "/admin/analytics", label: "Site Analytics", icon: BarChart3 },
+      ]
     : navItems;
 
   return (

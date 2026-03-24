@@ -66,6 +66,7 @@ const App = () => (
                 <Route path="/content-gaps" element={<Protected><ContentGaps /></Protected>} />
                 <Route path="/pricing" element={<Protected><Pricing /></Protected>} />
                 <Route path="/admin/users" element={<Protected><AdminUsers /></Protected>} />
+                <Route path="/admin/analytics" element={<Protected><AdminAnalytics /></Protected>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
