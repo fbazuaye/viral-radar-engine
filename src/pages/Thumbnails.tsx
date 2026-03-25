@@ -173,6 +173,10 @@ const Thumbnails = () => {
                 )}
                 {c.imageUrl && (
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setPreviewImage({ url: c.imageUrl!, title: c.style })}>
+                      <Image className="h-4 w-4" />
+                      Preview
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button size="sm" variant="secondary" className="gap-1.5">
