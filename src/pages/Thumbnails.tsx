@@ -150,7 +150,7 @@ const Thumbnails = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-5">
-              <Skeleton className="h-40 w-full rounded-lg mb-4" />
+              <Skeleton className="aspect-video w-full rounded-lg mb-4" />
               <Skeleton className="h-5 w-1/2 mb-2" />
               <Skeleton className="h-4 w-full mb-3" />
               <Skeleton className="h-3 w-3/4" />
