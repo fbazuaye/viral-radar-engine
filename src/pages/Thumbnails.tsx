@@ -150,7 +150,7 @@ const Thumbnails = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-5">
-              <Skeleton className="h-40 w-full rounded-lg mb-4" />
+              <Skeleton className="aspect-video w-full rounded-lg mb-4" />
               <Skeleton className="h-5 w-1/2 mb-2" />
               <Skeleton className="h-4 w-full mb-3" />
               <Skeleton className="h-3 w-3/4" />
@@ -163,9 +163,9 @@ const Thumbnails = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {concepts.map((c, i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-5">
-              <div className="relative group h-40 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
+              <div className="relative group aspect-video rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
                 {c.imageUrl ? (
-                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-cover" />
+                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-contain" />
                 ) : (
                   <Layers className="h-8 w-8 text-muted-foreground/40" />
                 )}
@@ -262,9 +262,9 @@ const Thumbnails = () => {
                       {data.map((c: any, i: number) => (
                         <div key={i} className="space-y-1">
                           {c.imageUrl ? (
-                            <img src={c.imageUrl} alt={c.style} className="w-full h-20 rounded object-cover" />
+                            <img src={c.imageUrl} alt={c.style} className="w-full aspect-video rounded object-contain" />
                           ) : (
-                            <div className="w-full h-20 rounded bg-muted/30 flex items-center justify-center">
+                            <div className="w-full aspect-video rounded bg-muted/30 flex items-center justify-center">
                               <Layers className="h-4 w-4 text-muted-foreground/40" />
                             </div>
                           )}

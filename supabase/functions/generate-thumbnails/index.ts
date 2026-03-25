@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     // Phase 2: Generate images for each concept in parallel
     const imagePromises = concepts.map(async (concept: any, index: number) => {
       try {
-        const imagePrompt = `Create a YouTube video thumbnail image at exactly 1280x720 pixels in 16:9 landscape format. Style: ${concept.style}. Description: ${concept.desc}. Colors: ${concept.colors}. Text overlay on the image: "${concept.textOverlay}". Make it eye-catching, professional, high resolution, and optimized for maximum click-through rate on YouTube.`;
+        const imagePrompt = `Create a YouTube video thumbnail image. The image MUST be landscape orientation with a 16:9 aspect ratio (1280x720). CRITICAL: Show the full face and upper body of any people — do NOT crop heads, foreheads, or chins. Ensure all subjects are fully visible within the frame with adequate headroom. Style: ${concept.style}. Description: ${concept.desc}. Colors: ${concept.colors}. Text overlay on the image: "${concept.textOverlay}". Make it eye-catching, professional, high resolution, and optimized for maximum click-through rate on YouTube.`;
 
         const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
