@@ -163,9 +163,9 @@ const Thumbnails = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {concepts.map((c, i) => (
             <div key={i} className="rounded-xl border border-border bg-card p-5">
-              <div className="relative group h-40 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
+              <div className="relative group aspect-video rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
                 {c.imageUrl ? (
-                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-cover" />
+                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-contain" />
                 ) : (
                   <Layers className="h-8 w-8 text-muted-foreground/40" />
                 )}
