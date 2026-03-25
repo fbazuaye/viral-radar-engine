@@ -28,8 +28,74 @@ Deno.serve(async (req) => {
       userId = user?.id ?? null;
     }
     if (userId) {
-      const { data: success } = await supabase.rpc("deduct_tokens", { _user_id: userId, _amount: 5, _action_type: "thumbnail_ideas", _description: `Thumbnails: ${topic}` });
+      const tokenAmount = isEdit ? 3 : 5;
+      const tokenDesc = isEdit ? `Edit thumbnail` : `Thumbnails: ${topic}`;
+      const tokenAction = isEdit ? "thumbnail_edit" : "thumbnail_ideas";
+      const { data: success } = await supabase.rpc("deduct_tokens", { _user_id: userId, _amount: tokenAmount, _action_type: tokenAction, _description: tokenDesc });
       if (!success) return new Response(JSON.stringify({ error: "Insufficient tokens. Please purchase more tokens or upgrade your plan." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // === EDIT MODE ===
+    if (isEdit) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 55000);
+
+      const editResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-3.1-flash-image-preview",
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: `Edit this thumbnail image: ${editPrompt}. Keep it landscape 16:9 aspect ratio suitable for YouTube thumbnails.` },
+              { type: "image_url", image_url: { url: editImage } }
+            ]
+          }],
+          modalities: ["image", "text"],
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!editResponse.ok) {
+        const status = editResponse.status;
+        await editResponse.text();
+        if (status === 429) return new Response(JSON.stringify({ error: "Rate limit exceeded." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        throw new Error("AI gateway error during image editing");
+      }
+
+      const editData = await editResponse.json();
+      const editedImageDataUrl = editData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+      if (!editedImageDataUrl || !editedImageDataUrl.startsWith("data:image/")) {
+        throw new Error("No edited image returned from AI");
+      }
+
+      // Upload edited image to storage
+      const base64 = editedImageDataUrl.split(",")[1];
+      const binaryStr = atob(base64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+
+      const fileName = `${userId || "anon"}/edit-${Date.now()}.png`;
+      const { error: uploadError } = await supabase.storage
+        .from("thumbnail-images")
+        .upload(fileName, bytes, { contentType: "image/png", upsert: true });
+
+      if (uploadError) throw new Error("Failed to upload edited image");
+
+      const { data: publicUrlData } = supabase.storage
+        .from("thumbnail-images")
+        .getPublicUrl(fileName);
+
+      return new Response(JSON.stringify({ editedImageUrl: publicUrlData.publicUrl }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Phase 1: Generate text concepts

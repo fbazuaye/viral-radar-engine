@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Image, Sparkles, Palette, Type, Layers, Loader2, Download, History, ChevronDown, ChevronUp, Monitor, Instagram, Twitter, X } from "lucide-react";
-import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import { useState, useRef } from "react";
+import { Image, Sparkles, Palette, Type, Layers, Loader2, Download, History, ChevronDown, ChevronUp, Monitor, Instagram, Twitter, X, Upload, SlidersHorizontal, ImagePlus } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
@@ -48,7 +48,6 @@ const resizeAndDownload = async (imageUrl: string, width: number, height: number
     canvas.height = height;
     const ctx = canvas.getContext("2d")!;
 
-    // Cover-fit: scale and center-crop
     const scale = Math.max(width / img.width, height / img.height);
     const scaledW = img.width * scale;
     const scaledH = img.height * scale;
@@ -74,6 +73,7 @@ const resizeAndDownload = async (imageUrl: string, width: number, height: number
 };
 
 const Thumbnails = () => {
+  const [activeTab, setActiveTab] = useState<"generate" | "edit">("generate");
   const [topic, setTopic] = useState("");
   const [concepts, setConcepts] = useState<ThumbnailConcept[]>(defaultConcepts);
   const [hasGenerated, setHasGenerated] = useState(false);
@@ -82,6 +82,13 @@ const Thumbnails = () => {
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const queryClient = useQueryClient();
   const { data: history = [] } = useInsightsHistory("thumbnail");
+
+  // Edit state
+  const [editImageBase64, setEditImageBase64] = useState<string | null>(null);
+  const [editPrompt, setEditPrompt] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+  const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -114,12 +121,86 @@ const Thumbnails = () => {
     }
   };
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large. Maximum 10MB.");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file (PNG, JPG).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setEditImageBase64(reader.result as string);
+      setEditedImageUrl(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleApplyEdit = async () => {
+    if (!editImageBase64) {
+      toast.error("Please upload an image first");
+      return;
+    }
+    if (!editPrompt.trim()) {
+      toast.error("Please describe the edit you want");
+      return;
+    }
+    setEditLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-thumbnails", {
+        body: { editImage: editImageBase64, editPrompt: editPrompt.trim() },
+      });
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
+      if (data?.editedImageUrl) {
+        setEditedImageUrl(data.editedImageUrl);
+        toast.success("Thumbnail edited successfully!");
+        queryClient.invalidateQueries({ queryKey: ["token-balance"] });
+      } else {
+        throw new Error("No edited image returned");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to edit thumbnail");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleDownloadEdited = () => {
+    if (!editedImageUrl) return;
+    const a = document.createElement("a");
+    a.href = editedImageUrl;
+    a.download = `edited-thumbnail-${Date.now()}.png`;
+    a.target = "_blank";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    toast.success("Download started!");
+  };
+
+  const clearEditUpload = () => {
+    setEditImageBase64(null);
+    setEditedImageUrl(null);
+    setEditPrompt("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const loadFromHistory = (item: any) => {
     const data = item.output_data as ThumbnailConcept[];
     if (Array.isArray(data)) {
       setConcepts(data);
       setHasGenerated(true);
       setTopic(item.input_text || "");
+      setActiveTab("generate");
     }
   };
 
@@ -128,99 +209,222 @@ const Thumbnails = () => {
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-2">
           <Image className="h-6 w-6 text-primary" />
-          Thumbnail Idea Generator
+          Thumbnails
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">AI-generated thumbnail concepts with images optimized for YouTube (1280×720) and social media</p>
+        <p className="text-sm text-muted-foreground mt-1">Create eye-catching thumbnails with AI or edit your own.</p>
       </div>
 
-      <div className="flex gap-3">
-        <input
-          type="text"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && !loading && handleGenerate()}
-          placeholder="Describe your video topic..."
-          className="flex-1 h-10 px-4 rounded-lg border border-input bg-card text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
-        />
-        <Button onClick={handleGenerate} disabled={loading} className="gradient-primary text-primary-foreground gap-2">
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {loading ? "Generating images..." : "Generate"}
-        </Button>
+      {/* Tabs */}
+      <div className="flex rounded-lg border border-border bg-card overflow-hidden w-fit">
+        <button
+          onClick={() => setActiveTab("generate")}
+          className={`flex items-center gap-2 px-6 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === "generate"
+              ? "bg-primary/10 text-primary border-r border-border"
+              : "text-muted-foreground hover:text-foreground border-r border-border"
+          }`}
+        >
+          <Sparkles className="h-4 w-4" />
+          Generate
+        </button>
+        <button
+          onClick={() => setActiveTab("edit")}
+          className={`flex items-center gap-2 px-6 py-2.5 text-sm font-medium transition-colors ${
+            activeTab === "edit"
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Edit
+        </button>
       </div>
 
-      {loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="rounded-xl border border-border bg-card p-5">
-              <Skeleton className="aspect-video w-full rounded-lg mb-4" />
-              <Skeleton className="h-5 w-1/2 mb-2" />
-              <Skeleton className="h-4 w-full mb-3" />
-              <Skeleton className="h-3 w-3/4" />
+      {/* === GENERATE TAB === */}
+      {activeTab === "generate" && (
+        <>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && !loading && handleGenerate()}
+              placeholder="Describe your video topic..."
+              className="flex-1 h-10 px-4 rounded-lg border border-input bg-card text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+            />
+            <Button onClick={handleGenerate} disabled={loading} className="gradient-primary text-primary-foreground gap-2">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {loading ? "Generating images..." : "Generate"}
+            </Button>
+          </div>
+
+          {loading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-5">
+                  <Skeleton className="aspect-video w-full rounded-lg mb-4" />
+                  <Skeleton className="h-5 w-1/2 mb-2" />
+                  <Skeleton className="h-4 w-full mb-3" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {!loading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {concepts.map((c, i) => (
-            <div key={i} className="rounded-xl border border-border bg-card p-5">
-              <div className="relative group aspect-video rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
-                {c.imageUrl ? (
-                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-contain cursor-pointer" onClick={() => setPreviewImage({ url: c.imageUrl!, title: c.style })} />
-                ) : (
-                  <Layers className="h-8 w-8 text-muted-foreground/40" />
-                )}
-                {c.imageUrl && (
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setPreviewImage({ url: c.imageUrl!, title: c.style })}>
-                      <Image className="h-4 w-4" />
-                      Preview
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="sm" variant="secondary" className="gap-1.5">
-                          <Download className="h-4 w-4" />
-                          Export
+          {!loading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {concepts.map((c, i) => (
+                <div key={i} className="rounded-xl border border-border bg-card p-5">
+                  <div className="relative group aspect-video rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
+                    {c.imageUrl ? (
+                      <img src={c.imageUrl} alt={c.style} className="w-full h-full object-contain cursor-pointer" onClick={() => setPreviewImage({ url: c.imageUrl!, title: c.style })} />
+                    ) : (
+                      <Layers className="h-8 w-8 text-muted-foreground/40" />
+                    )}
+                    {c.imageUrl && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <Button size="sm" variant="secondary" className="gap-1.5" onClick={() => setPreviewImage({ url: c.imageUrl!, title: c.style })}>
+                          <Image className="h-4 w-4" />
+                          Preview
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="center">
-                        {platformExports.map((p) => {
-                          const Icon = p.icon;
-                          return (
-                            <DropdownMenuItem
-                              key={p.label}
-                              onClick={() =>
-                                resizeAndDownload(
-                                  c.imageUrl!,
-                                  p.width,
-                                  p.height,
-                                  `thumbnail-${c.style.toLowerCase().replace(/\s+/g, "-")}-${p.width}x${p.height}.png`
-                                )
-                              }
-                            >
-                              <Icon className="h-4 w-4 mr-2" />
-                              {p.label}
-                            </DropdownMenuItem>
-                          );
-                        })}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="sm" variant="secondary" className="gap-1.5">
+                              <Download className="h-4 w-4" />
+                              Export
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="center">
+                            {platformExports.map((p) => {
+                              const Icon = p.icon;
+                              return (
+                                <DropdownMenuItem
+                                  key={p.label}
+                                  onClick={() =>
+                                    resizeAndDownload(
+                                      c.imageUrl!,
+                                      p.width,
+                                      p.height,
+                                      `thumbnail-${c.style.toLowerCase().replace(/\s+/g, "-")}-${p.width}x${p.height}.png`
+                                    )
+                                  }
+                                >
+                                  <Icon className="h-4 w-4 mr-2" />
+                                  {p.label}
+                                </DropdownMenuItem>
+                              );
+                            })}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <h3 className="font-display font-semibold text-card-foreground mb-2">{c.style}</h3>
-              <p className="text-sm text-muted-foreground mb-3">{c.desc}</p>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><Palette className="h-3 w-3" /> {c.colors}</span>
-                <span className="flex items-center gap-1"><Type className="h-3 w-3" /> "{c.textOverlay}"</span>
-              </div>
+                  <h3 className="font-display font-semibold text-card-foreground mb-2">{c.style}</h3>
+                  <p className="text-sm text-muted-foreground mb-3">{c.desc}</p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Palette className="h-3 w-3" /> {c.colors}</span>
+                    <span className="flex items-center gap-1"><Type className="h-3 w-3" /> "{c.textOverlay}"</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+        </>
+      )}
+
+      {/* === EDIT TAB === */}
+      {activeTab === "edit" && (
+        <div className="space-y-6">
+          {/* Upload area */}
+          {!editImageBase64 ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-muted/20 transition-colors"
+            >
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <ImagePlus className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-foreground mb-1">Upload a thumbnail to edit</p>
+              <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Original image preview */}
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-foreground">Original Image</h3>
+                  <Button variant="ghost" size="sm" onClick={clearEditUpload} className="text-muted-foreground hover:text-foreground">
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="aspect-video rounded-lg overflow-hidden bg-muted/50 border border-border/50">
+                  <img
+                    src={editImageBase64}
+                    alt="Original thumbnail"
+                    className="w-full h-full object-contain cursor-pointer"
+                    onClick={() => setPreviewImage({ url: editImageBase64!, title: "Original Image" })}
+                  />
+                </div>
+              </div>
+
+              {/* Edit prompt */}
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  value={editPrompt}
+                  onChange={(e) => setEditPrompt(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !editLoading && handleApplyEdit()}
+                  placeholder="Describe the edit... e.g. 'Add bold text SUBSCRIBE', 'make colors more vibrant'"
+                  className="flex-1 h-10 px-4 rounded-lg border border-input bg-card text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+                />
+                <Button onClick={handleApplyEdit} disabled={editLoading} className="gradient-primary text-primary-foreground gap-2">
+                  {editLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SlidersHorizontal className="h-4 w-4" />}
+                  {editLoading ? "Editing..." : "Apply Edit"}
+                </Button>
+              </div>
+
+              {/* Loading skeleton */}
+              {editLoading && (
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <Skeleton className="h-5 w-32 mb-3" />
+                  <Skeleton className="aspect-video w-full rounded-lg" />
+                </div>
+              )}
+
+              {/* Edited result */}
+              {editedImageUrl && !editLoading && (
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-foreground">Edited Result</h3>
+                    <Button variant="outline" size="sm" onClick={handleDownloadEdited} className="gap-1.5">
+                      <Download className="h-4 w-4" />
+                      Download
+                    </Button>
+                  </div>
+                  <div className="aspect-video rounded-lg overflow-hidden bg-muted/50 border border-border/50">
+                    <img
+                      src={editedImageUrl}
+                      alt="Edited thumbnail"
+                      className="w-full h-full object-contain cursor-pointer"
+                      onClick={() => setPreviewImage({ url: editedImageUrl!, title: "Edited Thumbnail" })}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {history.length > 0 && (
+      {/* History (only on generate tab) */}
+      {activeTab === "generate" && history.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-lg font-display font-semibold text-foreground flex items-center gap-2">
             <History className="h-5 w-5 text-muted-foreground" />
