@@ -281,6 +281,21 @@ const Thumbnails = () => {
           </div>
         </div>
       )}
+
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] p-2 bg-background/95 backdrop-blur-sm border-border">
+          {previewImage && (
+            <div className="flex flex-col items-center gap-3">
+              <img
+                src={previewImage.url}
+                alt={previewImage.title}
+                className="w-full max-h-[80vh] object-contain rounded-lg"
+              />
+              <p className="text-sm font-medium text-card-foreground">{previewImage.title}</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
