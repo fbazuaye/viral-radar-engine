@@ -264,7 +264,7 @@ const Thumbnails = () => {
                       {data.map((c: any, i: number) => (
                         <div key={i} className="space-y-1">
                           {c.imageUrl ? (
-                            <img src={c.imageUrl} alt={c.style} className="w-full aspect-video rounded object-contain" />
+                            <img src={c.imageUrl} alt={c.style} className="w-full aspect-video rounded object-contain cursor-pointer" onClick={() => setPreviewImage({ url: c.imageUrl, title: c.style })} />
                           ) : (
                             <div className="w-full aspect-video rounded bg-muted/30 flex items-center justify-center">
                               <Layers className="h-4 w-4 text-muted-foreground/40" />
