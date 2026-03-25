@@ -86,23 +86,30 @@ Deno.serve(async (req) => {
     const result = toolCall ? JSON.parse(toolCall.function.arguments) : { concepts: [] };
     const concepts = result.concepts || [];
 
-    // Phase 2: Generate images for each concept in parallel
-    const imagePromises = concepts.map(async (concept: any, index: number) => {
+    // Phase 2: Generate images sequentially (2 at a time) to avoid timeouts
+    const generateImage = async (concept: any, index: number) => {
       try {
         const imagePrompt = `Create a YouTube video thumbnail image. The image MUST be landscape orientation with a 16:9 aspect ratio (1280x720). CRITICAL: Show the full face and upper body of any people — do NOT crop heads, foreheads, or chins. Ensure all subjects are fully visible within the frame with adequate headroom. Style: ${concept.style}. Description: ${concept.desc}. Colors: ${concept.colors}. Text overlay on the image: "${concept.textOverlay}". Make it eye-catching, professional, high resolution, and optimized for maximum click-through rate on YouTube.`;
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 55000); // 55s timeout per image
 
         const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image",
+            model: "google/gemini-3.1-flash-image-preview",
             messages: [{ role: "user", content: imagePrompt }],
             modalities: ["image", "text"],
           }),
+          signal: controller.signal,
         });
 
+        clearTimeout(timeout);
+
         if (!imgResponse.ok) {
-          console.error(`Image generation failed for concept ${index}: ${imgResponse.status}`);
+          const errText = await imgResponse.text();
+          console.error(`Image generation failed for concept ${index}: ${imgResponse.status} ${errText}`);
           return concept;
         }
 
@@ -141,9 +148,12 @@ Deno.serve(async (req) => {
         console.error(`Image generation error for concept ${index}:`, err);
         return concept;
       }
-    });
+    };
 
-    const conceptsWithImages = await Promise.all(imagePromises);
+    // Generate in batches of 2 to avoid timeout
+    const batch1 = await Promise.all(concepts.slice(0, 2).map((c: any, i: number) => generateImage(c, i)));
+    const batch2 = await Promise.all(concepts.slice(2).map((c: any, i: number) => generateImage(c, i + 2)));
+    const conceptsWithImages = [...batch1, ...batch2];
 
     // Save to insights
     if (userId) {
