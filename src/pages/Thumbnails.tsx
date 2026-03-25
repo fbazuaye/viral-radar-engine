@@ -403,10 +403,29 @@ const Thumbnails = () => {
                 <div className="rounded-xl border border-border bg-card p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-medium text-foreground">Edited Result</h3>
-                    <Button variant="outline" size="sm" onClick={handleDownloadEdited} className="gap-1.5">
-                      <Download className="h-4 w-4" />
-                      Download
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="sm" variant="outline" className="gap-1.5">
+                          <Download className="h-4 w-4" />
+                          Export
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {platformExports.map((p) => {
+                          const Icon = p.icon;
+                          return (
+                            <DropdownMenuItem
+                              key={p.label}
+                              onClick={() => resizeAndDownload(editedImageUrl!, p.width, p.height, `edited-thumbnail-${p.width}x${p.height}.png`)}
+                              className="gap-2"
+                            >
+                              <Icon className="h-4 w-4" />
+                              {p.label}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                   <div className="aspect-video rounded-lg overflow-hidden bg-muted/50 border border-border/50">
                     <img
