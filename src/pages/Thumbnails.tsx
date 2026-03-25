@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Image, Sparkles, Palette, Type, Layers, Loader2, Download, History, ChevronDown, ChevronUp, Monitor, Instagram, Twitter } from "lucide-react";
+import { Image, Sparkles, Palette, Type, Layers, Loader2, Download, History, ChevronDown, ChevronUp, Monitor, Instagram, Twitter, X } from "lucide-react";
+import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
@@ -78,6 +79,7 @@ const Thumbnails = () => {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const queryClient = useQueryClient();
   const { data: history = [] } = useInsightsHistory("thumbnail");
 
@@ -165,7 +167,7 @@ const Thumbnails = () => {
             <div key={i} className="rounded-xl border border-border bg-card p-5">
               <div className="relative group aspect-video rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
                 {c.imageUrl ? (
-                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-contain" />
+                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-contain cursor-pointer" onClick={() => setPreviewImage({ url: c.imageUrl!, title: c.style })} />
                 ) : (
                   <Layers className="h-8 w-8 text-muted-foreground/40" />
                 )}
@@ -262,7 +264,7 @@ const Thumbnails = () => {
                       {data.map((c: any, i: number) => (
                         <div key={i} className="space-y-1">
                           {c.imageUrl ? (
-                            <img src={c.imageUrl} alt={c.style} className="w-full aspect-video rounded object-contain" />
+                            <img src={c.imageUrl} alt={c.style} className="w-full aspect-video rounded object-contain cursor-pointer" onClick={() => setPreviewImage({ url: c.imageUrl, title: c.style })} />
                           ) : (
                             <div className="w-full aspect-video rounded bg-muted/30 flex items-center justify-center">
                               <Layers className="h-4 w-4 text-muted-foreground/40" />
@@ -279,6 +281,21 @@ const Thumbnails = () => {
           </div>
         </div>
       )}
+
+      <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+        <DialogContent className="max-w-5xl w-[95vw] p-2 bg-background/95 backdrop-blur-sm border-border">
+          {previewImage && (
+            <div className="flex flex-col items-center gap-3">
+              <img
+                src={previewImage.url}
+                alt={previewImage.title}
+                className="w-full max-h-[80vh] object-contain rounded-lg"
+              />
+              <p className="text-sm font-medium text-card-foreground">{previewImage.title}</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
