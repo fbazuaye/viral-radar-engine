@@ -79,6 +79,7 @@ const Thumbnails = () => {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const queryClient = useQueryClient();
   const { data: history = [] } = useInsightsHistory("thumbnail");
 
