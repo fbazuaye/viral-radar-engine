@@ -167,7 +167,7 @@ const Thumbnails = () => {
             <div key={i} className="rounded-xl border border-border bg-card p-5">
               <div className="relative group aspect-video rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center mb-4 overflow-hidden">
                 {c.imageUrl ? (
-                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-contain" />
+                  <img src={c.imageUrl} alt={c.style} className="w-full h-full object-contain cursor-pointer" onClick={() => setPreviewImage({ url: c.imageUrl!, title: c.style })} />
                 ) : (
                   <Layers className="h-8 w-8 text-muted-foreground/40" />
                 )}
