@@ -1,4 +1,4 @@
-import { AlignLeft, Sparkles, Loader2, History, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { AlignLeft, Sparkles, Loader2, History, Copy, Check, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,9 @@ const DescriptionGenerator = () => {
   const [title, setTitle] = useState("");
   const [script, setScript] = useState("");
   const [description, setDescription] = useState("");
+  const [refineInstruction, setRefineInstruction] = useState("");
   const [loading, setLoading] = useState(false);
+  const [refining, setRefining] = useState(false);
   const [copied, setCopied] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
   const { data: history = [] } = useInsightsHistory("description");
@@ -39,6 +41,35 @@ const DescriptionGenerator = () => {
       toast({ title: "Error", description: e.message || "Failed to generate description", variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefine = async () => {
+    if (!refineInstruction.trim() || !description) return;
+    setRefining(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-description", {
+        body: {
+          title: title.trim(),
+          script: script.trim() || undefined,
+          refineInstruction: refineInstruction.trim(),
+          currentDescription: description,
+        },
+      });
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+      setDescription(data.description || "");
+      setRefineInstruction("");
+      queryClient.invalidateQueries({ queryKey: ["insights-history", "description"] });
+      queryClient.invalidateQueries({ queryKey: ["token-balance"] });
+      toast({ title: "Refined!", description: "Description updated with your instructions" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to refine description", variant: "destructive" });
+    } finally {
+      setRefining(false);
     }
   };
 
@@ -115,6 +146,26 @@ const DescriptionGenerator = () => {
           <pre className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-4 whitespace-pre-wrap font-sans leading-relaxed">
             {description}
           </pre>
+          <div className="space-y-2 pt-2 border-t border-border">
+            <label className="text-sm font-medium text-foreground block">Refine this description</label>
+            <textarea
+              value={refineInstruction}
+              onChange={(e) => setRefineInstruction(e.target.value)}
+              placeholder="e.g. Make it shorter, add more hashtags, focus on SEO keywords, change the tone to casual..."
+              rows={2}
+              className="w-full px-4 py-2 rounded-lg border border-input bg-card text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring resize-y"
+            />
+            <Button
+              onClick={handleRefine}
+              disabled={refining || !refineInstruction.trim()}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              {refining ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Refine Description
+            </Button>
+          </div>
         </div>
       )}
 
