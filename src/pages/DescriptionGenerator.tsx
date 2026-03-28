@@ -44,6 +44,35 @@ const DescriptionGenerator = () => {
     }
   };
 
+  const handleRefine = async () => {
+    if (!refineInstruction.trim() || !description) return;
+    setRefining(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-description", {
+        body: {
+          title: title.trim(),
+          script: script.trim() || undefined,
+          refineInstruction: refineInstruction.trim(),
+          currentDescription: description,
+        },
+      });
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
+      setDescription(data.description || "");
+      setRefineInstruction("");
+      queryClient.invalidateQueries({ queryKey: ["insights-history", "description"] });
+      queryClient.invalidateQueries({ queryKey: ["token-balance"] });
+      toast({ title: "Refined!", description: "Description updated with your instructions" });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to refine description", variant: "destructive" });
+    } finally {
+      setRefining(false);
+    }
+  };
+
   const handleCopy = async () => {
     await navigator.clipboard.writeText(description);
     setCopied(true);
