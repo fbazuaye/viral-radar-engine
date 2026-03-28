@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { title, script } = await req.json();
+    const { title, script, refineInstruction, currentDescription } = await req.json();
     if (!title) throw new Error("Title is required");
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -29,9 +29,14 @@ Deno.serve(async (req) => {
       if (!success) return new Response(JSON.stringify({ error: "Insufficient tokens. Please purchase more tokens or upgrade your plan." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const userPrompt = script
-      ? `Create a YouTube video description for the video titled: "${title}"\n\nHere is the script for context:\n${script}`
-      : `Create a YouTube video description for the video titled: "${title}"`;
+    let userPrompt: string;
+    if (refineInstruction && currentDescription) {
+      userPrompt = `Here is the current YouTube video description for "${title}":\n\n${currentDescription}\n\nPlease refine it with these instructions: ${refineInstruction}`;
+    } else if (script) {
+      userPrompt = `Create a YouTube video description for the video titled: "${title}"\n\nHere is the script for context:\n${script}`;
+    } else {
+      userPrompt = `Create a YouTube video description for the video titled: "${title}"`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
