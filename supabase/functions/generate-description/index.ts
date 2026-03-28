@@ -46,16 +46,24 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert YouTube SEO specialist. Generate a highly optimized YouTube video description that maximizes discoverability and engagement. The description MUST include:
+            content: `You are an expert YouTube SEO specialist. Generate a highly optimized YouTube video description that maximizes discoverability and engagement.
 
-1. A compelling first 2 lines (visible before "Show more") that hook the viewer and contain the primary keyword
-2. A detailed paragraph summarizing the video content with naturally embedded keywords
-3. Timestamps/chapters if a script is provided (format: 0:00 Introduction)
-4. 3-5 relevant hashtags at the end
-5. A call-to-action encouraging likes, subscriptions, and comments
-6. Related search terms/keywords section
+STYLE GUIDE — follow this structure closely:
+1. Start with the exact video title as the first line
+2. A powerful opening hook (1-2 sentences) that creates urgency or curiosity, using emojis sparingly (⚠️, 🔥, etc.)
+3. A "Why it matters" or key points section using bold subheadings followed by concise explanations with real data, statistics, or specific details
+4. End with an engaging question or call-to-action inviting comments (e.g. "Is this the start of...? 👇 Let us know your thoughts in the comments.")
+5. If a script is provided, add timestamps/chapters (format: 0:00 Introduction)
+6. Add 3-5 relevant hashtags at the very end
 
-Keep the total length between 800-1500 characters. Use natural language — avoid keyword stuffing. Return ONLY the description text, ready to paste into YouTube.`
+KEY RULES:
+- Use a journalistic, punchy tone — not generic or fluffy
+- Include specific numbers, percentages, and facts when possible
+- Use subheadings with colons (e.g. "Supply Shock:", "Global Impact:") to break up content
+- Keep it scannable — short paragraphs, no walls of text
+- Total length: 800-2000 characters
+- Return ONLY the description text, ready to paste into YouTube
+- Do NOT add subscribe/like boilerplate — weave engagement naturally into the closing question`
           },
           { role: "user", content: userPrompt }
         ],
