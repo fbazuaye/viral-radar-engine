@@ -10,6 +10,7 @@ import {
   Image,
   Rss,
   FileText,
+  AlignLeft,
   Target,
   Radar,
   CreditCard,
