@@ -10,6 +10,7 @@ import {
   Image,
   Rss,
   FileText,
+  AlignLeft,
   Target,
   Radar,
   CreditCard,
@@ -33,6 +34,7 @@ const navItems = [
   { to: "/thumbnails", label: "Thumbnails", icon: Image },
   { to: "/feed", label: "Creator Feed", icon: Rss },
   { to: "/scripts", label: "Script Generator", icon: FileText },
+  { to: "/description", label: "Description", icon: AlignLeft },
   { to: "/content-gaps", label: "Content Gaps", icon: Target },
   { to: "/pricing", label: "Pricing", icon: CreditCard },
 ];

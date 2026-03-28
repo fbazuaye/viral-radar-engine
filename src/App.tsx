@@ -21,6 +21,7 @@ const Competitors = lazy(() => import("./pages/Competitors"));
 const Thumbnails = lazy(() => import("./pages/Thumbnails"));
 const CreatorFeed = lazy(() => import("./pages/CreatorFeed"));
 const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
+const DescriptionGenerator = lazy(() => import("./pages/DescriptionGenerator"));
 const ContentGaps = lazy(() => import("./pages/ContentGaps"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
@@ -63,6 +64,7 @@ const App = () => (
                 <Route path="/thumbnails" element={<Protected><Thumbnails /></Protected>} />
                 <Route path="/feed" element={<Protected><CreatorFeed /></Protected>} />
                 <Route path="/scripts" element={<Protected><ScriptGenerator /></Protected>} />
+                <Route path="/description" element={<Protected><DescriptionGenerator /></Protected>} />
                 <Route path="/content-gaps" element={<Protected><ContentGaps /></Protected>} />
                 <Route path="/pricing" element={<Protected><Pricing /></Protected>} />
                 <Route path="/admin/users" element={<Protected><AdminUsers /></Protected>} />
