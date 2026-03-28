@@ -1,29 +1,40 @@
 
 
-## Plan: Fix Thumbnail Display — Full Image Visibility
+## Plan: Add Video Description Generator
 
-### Problem
-Two issues cause faces to be cut off:
+### Overview
+Add a new "Description" page to the sidebar and app routes. Users paste a video title and optionally paste a generated script, then click "Create Video Description" to get an SEO-optimized YouTube video description they can copy.
 
-1. **Fixed-height container** (`h-40` = 160px): The thumbnail card image container is a fixed 160px tall with `object-cover`, which crops the image to fill the box — cutting off faces and other important content.
+### What Gets Built
 
-2. **AI prompt doesn't enforce aspect ratio strongly enough**: The image generation prompt requests 1280×720 but the model may return different dimensions.
+1. **New edge function: `supabase/functions/generate-description/index.ts`**
+   - Accepts `title` (required) and `script` (optional)
+   - Uses Lovable AI (gemini-3-flash-preview) with a system prompt that generates SEO-optimized YouTube descriptions with keywords, timestamps, hashtags, and call-to-action
+   - Deducts 3 tokens (new action: `description_generation`)
+   - Auth + token gating following the same pattern as `generate-script`
+   - Saves to `insights_history` with type `description`
 
-### Solution
+2. **New page: `src/pages/DescriptionGenerator.tsx`**
+   - Input fields: Video Title (text input), Script (large textarea, optional — "for best results")
+   - "Create Video Description" button
+   - Result area displaying the generated description with a **Copy to Clipboard** button
+   - History sidebar showing past generations (same pattern as ScriptGenerator)
 
-**File: `src/pages/Thumbnails.tsx`**
+3. **Routing & navigation updates**
+   - Add to sidebar nav items with `FileText` or `AlignLeft` icon, label "Description"
+   - Add lazy import + route `/description` in App.tsx
 
-1. **Replace fixed-height container with aspect-ratio container**: Change `h-40` to `aspect-video` (16:9) so images display at their natural proportions without cropping.
-   - Change `object-cover` to `object-contain` as a fallback so nothing gets cropped even if the AI returns a non-16:9 image.
-   - Apply this to both the main grid thumbnails and the history preview thumbnails.
+4. **Token cost config**
+   - Add `description_generation: { cost: 3, label: "Description Generation" }` to `tokenCosts.ts`
 
-2. **Update the history mini-previews**: Change `h-20` fixed containers to `aspect-video` as well.
-
-**File: `supabase/functions/generate-thumbnails/index.ts`**
-
-3. **Strengthen the image prompt**: Add explicit instructions like "The image MUST be landscape orientation, 16:9 aspect ratio. Show full body and face of any people — do not crop heads or faces. Ensure all subjects are fully visible within frame."
+5. **Edge function config**
+   - Add `[functions.generate-description]` with `verify_jwt = false` to `supabase/config.toml`
 
 ### Files Changed
-- `src/pages/Thumbnails.tsx` — aspect-ratio containers, `object-contain`
-- `supabase/functions/generate-thumbnails/index.ts` — stronger prompt for full-frame composition
+- **New**: `supabase/functions/generate-description/index.ts`
+- **New**: `src/pages/DescriptionGenerator.tsx`
+- **Edit**: `src/App.tsx` — add route
+- **Edit**: `src/components/layout/Sidebar.tsx` — add nav item
+- **Edit**: `src/lib/tokenCosts.ts` — add cost entry
+- **Edit**: `supabase/config.toml` — add function config
 
