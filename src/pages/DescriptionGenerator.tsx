@@ -1,4 +1,4 @@
-import { AlignLeft, Sparkles, Loader2, History, Copy, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { AlignLeft, Sparkles, Loader2, History, Copy, Check, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
