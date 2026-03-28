@@ -64,6 +64,7 @@ const App = () => (
                 <Route path="/thumbnails" element={<Protected><Thumbnails /></Protected>} />
                 <Route path="/feed" element={<Protected><CreatorFeed /></Protected>} />
                 <Route path="/scripts" element={<Protected><ScriptGenerator /></Protected>} />
+                <Route path="/description" element={<Protected><DescriptionGenerator /></Protected>} />
                 <Route path="/content-gaps" element={<Protected><ContentGaps /></Protected>} />
                 <Route path="/pricing" element={<Protected><Pricing /></Protected>} />
                 <Route path="/admin/users" element={<Protected><AdminUsers /></Protected>} />

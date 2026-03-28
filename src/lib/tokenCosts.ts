@@ -4,6 +4,7 @@ export const TOKEN_COSTS = {
   title_optimize: { cost: 3, label: "Title Optimization" },
   idea_generation: { cost: 5, label: "Idea Generation" },
   script_generation: { cost: 10, label: "Script Generation" },
+  description_generation: { cost: 3, label: "Description Generation" },
 } as const;
 
 export type TokenAction = keyof typeof TOKEN_COSTS;
