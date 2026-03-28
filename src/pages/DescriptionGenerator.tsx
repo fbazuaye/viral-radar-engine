@@ -146,6 +146,17 @@ const DescriptionGenerator = () => {
           <pre className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-4 whitespace-pre-wrap font-sans leading-relaxed">
             {description}
           </pre>
+          <div className="flex items-center justify-between text-xs">
+            <span className={`font-medium ${description.length < 800 ? "text-yellow-500" : description.length > 5000 ? "text-destructive" : "text-primary"}`}>
+              {description.length.toLocaleString()} characters
+            </span>
+            <span className="text-muted-foreground">
+              YouTube recommended: 800–5,000 chars
+              {description.length < 800 && " · ⚠ Too short"}
+              {description.length > 5000 && " · ⚠ Too long"}
+              {description.length >= 800 && description.length <= 5000 && " · ✓ Good length"}
+            </span>
+          </div>
           <div className="space-y-2 pt-2 border-t border-border">
             <label className="text-sm font-medium text-foreground block">Refine this description</label>
             <textarea
