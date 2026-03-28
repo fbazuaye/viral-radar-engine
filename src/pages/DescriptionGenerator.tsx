@@ -12,7 +12,9 @@ const DescriptionGenerator = () => {
   const [title, setTitle] = useState("");
   const [script, setScript] = useState("");
   const [description, setDescription] = useState("");
+  const [refineInstruction, setRefineInstruction] = useState("");
   const [loading, setLoading] = useState(false);
+  const [refining, setRefining] = useState(false);
   const [copied, setCopied] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
   const { data: history = [] } = useInsightsHistory("description");
