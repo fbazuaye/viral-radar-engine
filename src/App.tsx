@@ -21,6 +21,7 @@ const Competitors = lazy(() => import("./pages/Competitors"));
 const Thumbnails = lazy(() => import("./pages/Thumbnails"));
 const CreatorFeed = lazy(() => import("./pages/CreatorFeed"));
 const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
+const DescriptionGenerator = lazy(() => import("./pages/DescriptionGenerator"));
 const ContentGaps = lazy(() => import("./pages/ContentGaps"));
 const Pricing = lazy(() => import("./pages/Pricing"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
