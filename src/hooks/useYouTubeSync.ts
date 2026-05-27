@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
 
 export const useYouTubeSync = () => {
   const queryClient = useQueryClient();
@@ -9,7 +10,10 @@ export const useYouTubeSync = () => {
       const { data, error } = await supabase.functions.invoke("youtube-sync", {
         body: { channelInput },
       });
-      if (error) throw error;
+      if (error) {
+        const msg = await extractEdgeFunctionError(error);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
       return data;
     },
