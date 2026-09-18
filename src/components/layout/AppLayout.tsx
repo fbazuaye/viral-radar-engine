@@ -1,6 +1,7 @@
 import { ReactNode, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { Footer } from "./Footer";
 import { cn } from "@/lib/utils";
 import { usePageTracking } from "@/hooks/usePageTracking";
 
@@ -9,7 +10,7 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
   usePageTracking();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Desktop sidebar */}
       <div className="hidden lg:block">
         <Sidebar />
@@ -26,11 +27,12 @@ export const AppLayout = ({ children }: { children: ReactNode }) => {
       )}
 
       {/* Main content */}
-      <div className="lg:pl-64 transition-all duration-300">
+      <div className="lg:pl-64 transition-all duration-300 flex flex-col flex-1">
         <Header onMenuClick={() => setMobileOpen(true)} />
-        <main className="p-4 lg:p-6">
+        <main className="p-4 lg:p-6 flex-1">
           {children}
         </main>
+        <Footer />
       </div>
     </div>
   );
