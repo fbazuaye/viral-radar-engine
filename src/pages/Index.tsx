@@ -179,10 +179,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border px-6 py-8 text-center text-sm text-muted-foreground space-y-1">
-        <p>© {new Date().getFullYear()} YTRadar. All rights reserved.</p>
-        <p>Designed by Frank Bazuaye · Powered by LiveGig Ltd</p>
-      </footer>
+      <Footer />
     </div>
   );
 };
