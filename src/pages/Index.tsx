@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Radar, TrendingUp, Lightbulb, FileText, BarChart3, Search, Check, Coins, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Footer } from "@/components/layout/Footer";
 import { TIER_TOKENS } from "@/lib/tokenCosts";
 
 const features = [
