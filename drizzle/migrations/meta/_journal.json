@@ -8,6 +8,13 @@
       "when": 1794566965845,
       "tag": "0000_video_studio_jobs",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794567969438,
+      "tag": "0001_long_studio_videos",
+      "breakpoints": true
     }
   ]
 }

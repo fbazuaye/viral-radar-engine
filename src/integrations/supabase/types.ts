@@ -260,52 +260,67 @@ export type Database = {
       studio_clips: {
         Row: {
           aspect_ratio: string
+          completed_seconds: number
           created_at: string
           duration: number
           error_message: string | null
           gateway_id: string | null
           id: string
           kind: string
+          lease_token: string | null
+          lease_until: string | null
           progress: number
           prompt: string
           request_id: string
           resolution: string
+          scene_paths: string[]
           status: string
           storage_path: string | null
+          target_duration: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           aspect_ratio: string
+          completed_seconds?: number
           created_at?: string
           duration: number
           error_message?: string | null
           gateway_id?: string | null
           id?: string
           kind: string
+          lease_token?: string | null
+          lease_until?: string | null
           progress?: number
           prompt: string
           request_id: string
           resolution: string
+          scene_paths?: string[]
           status?: string
           storage_path?: string | null
+          target_duration?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           aspect_ratio?: string
+          completed_seconds?: number
           created_at?: string
           duration?: number
           error_message?: string | null
           gateway_id?: string | null
           id?: string
           kind?: string
+          lease_token?: string | null
+          lease_until?: string | null
           progress?: number
           prompt?: string
           request_id?: string
           resolution?: string
+          scene_paths?: string[]
           status?: string
           storage_path?: string | null
+          target_duration?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -531,6 +546,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      lease_studio_clip: {
+        Args: { _id: string; _token: string }
         Returns: boolean
       }
     }

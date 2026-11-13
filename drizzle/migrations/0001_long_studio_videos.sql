@@ -1,0 +1,5 @@
+ALTER TABLE public.studio_clips ADD COLUMN target_duration integer CHECK(target_duration BETWEEN 3 AND 1200), ADD COLUMN scene_paths text[] NOT NULL DEFAULT '{}', ADD COLUMN completed_seconds integer NOT NULL DEFAULT 0, ADD COLUMN lease_until timestamptz, ADD COLUMN lease_token uuid;
+CREATE FUNCTION public.lease_studio_clip(_id uuid,_token uuid) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN UPDATE public.studio_clips SET lease_until=now()+interval '90 seconds',lease_token=_token WHERE id=_id AND (lease_until IS NULL OR lease_until<now()); RETURN FOUND; END $$;
+REVOKE ALL ON FUNCTION public.lease_studio_clip(uuid,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.lease_studio_clip(uuid,uuid) TO service_role;
+CREATE POLICY "Owners upload assembled clips" ON storage.objects FOR INSERT TO authenticated WITH CHECK(bucket_id='studio-clips' AND (storage.foldername(name))[1]=auth.uid()::text AND name LIKE '%/assembled.mp4');
