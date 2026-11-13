@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
-import { Clip, isActiveClip, STUDIO_DURATIONS, durationLabel } from "@/lib/clipStudio";
+import { Clip, isActiveClip, STUDIO_DURATIONS, durationLabel, videoTokenCost } from "@/lib/clipStudio";
 import { cn } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/useAdminUsers";
 
@@ -102,7 +102,8 @@ export default function ClipStudio() {
         <fieldset className="space-y-2"><legend className="mb-2 text-sm font-medium">Format</legend><div className="grid grid-cols-2 gap-3">{(["16:9", "9:16"] as const).map(value => <Button className="h-16 flex-col gap-1" type="button" key={value} variant={ratio === value ? "default" : "outline"} aria-pressed={ratio === value} onClick={() => setRatio(value)}>{value === "16:9" ? <Monitor /> : <Smartphone />}{value} · {value === "16:9" ? "Landscape" : "Portrait"}</Button>)}</div></fieldset>
         <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="duration">Duration</Label><select id="duration" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={duration} onChange={e => setDuration(Number(e.target.value))}>{STUDIO_DURATIONS.map(n => <option key={n} value={n}>{durationLabel(n)}</option>)}</select></div><div className="space-y-2"><Label htmlFor="resolution">Resolution</Label><select id="resolution" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={resolution} onChange={e => setResolution(e.target.value)}>{["360p", "720p", "1080p"].map(n => <option key={n}>{n}</option>)}</select></div></div>
         <Button type="submit" className="w-full" disabled={busy || Boolean(active) || prompt.trim().length < 5}>{busy ? <Loader2 className="animate-spin" /> : <Sparkles />}{busy ? "Submitting…" : active ? "Generation in progress" : "Generate video"}</Button>
-        <p className="text-xs text-muted-foreground">Uses workspace AI credits. Generated clips include audio.{duration > 10 && ` ${Math.ceil(duration / 10)} scenes will be generated. Keep this page open; longer videos take more time and credits.`}</p>
+        <p className="text-sm font-medium text-foreground">Cost: {videoTokenCost(duration, resolution).toLocaleString()} tokens</p>
+        <p className="text-xs text-muted-foreground">Generated clips include audio.{duration > 10 && ` ${Math.ceil(duration / 10)} scenes will be generated. Keep this page open; longer videos take more time and credits.`}</p>
       </form>
       <section className="min-w-0 space-y-3" aria-label="Clip preview">
         <div className="flex items-center justify-between"><h2 className="font-display font-semibold">Preview</h2>{current && <span className="text-xs text-muted-foreground">{current.aspect_ratio} · {durationLabel(current.duration)} · {current.resolution}</span>}</div>

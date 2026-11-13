@@ -5,6 +5,9 @@ export const TOKEN_COSTS = {
   idea_generation: { cost: 5, label: "Idea Generation" },
   script_generation: { cost: 10, label: "Script Generation" },
   description_generation: { cost: 3, label: "Description Generation" },
+  video_360p: { cost: 15, label: "Video 360p (per 10s)" },
+  video_720p: { cost: 45, label: "Video 720p (per 10s)" },
+  video_1080p: { cost: 70, label: "Video 1080p (per 10s)" },
 } as const;
 
 export type TokenAction = keyof typeof TOKEN_COSTS;

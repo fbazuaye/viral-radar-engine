@@ -1,7 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3";
-import { ClipConfig, videoRequest, sceneDurations } from "./contract.ts";
+import { ClipConfig, videoRequest, sceneDurations, videoTokenCost } from "./contract.ts";
 
 const Body = z.discriminatedUnion("action", [
   ClipConfig.extend({ action: z.literal("create"), request_id: z.string().uuid() }),
@@ -82,6 +82,9 @@ Deno.serve(async (req) => {
       const state = await pause();
       if (state) return json({ error: state.message }, state.status);
       const { action: _action, request_id, ...config } = body;
+      const cost = videoTokenCost(config.duration, config.resolution);
+      const { data: paid, error: payError } = await db.rpc("deduct_tokens", { _user_id: user.id, _amount: cost, _action_type: "video_generation", _description: `Video ${config.duration}s ${config.resolution}: ${config.prompt.slice(0, 60)}` }); must(payError);
+      if (!paid) return json({ error: `Insufficient tokens. This video costs ${cost} tokens. Please purchase more tokens or upgrade your plan.` }, 402);
       const { data, error } = await db.from("studio_clips").insert({ ...config, duration: sceneDurations(config.duration)[0], target_duration: config.duration, request_id, user_id: user.id }).select().single(); must(error); clip = data;
     } else {
       const { data, error } = await db.from("studio_clips").select("*").eq("id", body.id).eq("user_id", user.id).maybeSingle(); must(error); clip = data;

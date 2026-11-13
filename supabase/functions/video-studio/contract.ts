@@ -21,3 +21,5 @@ export function videoRequest(config: z.infer<typeof ClipConfig>) {
     response_format: { type: "video", resolution: config.resolution, duration: `${config.duration}s`, aspect_ratio: config.aspect_ratio },
   };
 }
+export const SCENE_TOKEN_COSTS: Record<string, number> = { "360p": 15, "720p": 45, "1080p": 70 };
+export const videoTokenCost = (duration: number, resolution: string) => sceneDurations(duration).length * (SCENE_TOKEN_COSTS[resolution] ?? SCENE_TOKEN_COSTS["1080p"]);
