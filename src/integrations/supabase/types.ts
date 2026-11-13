@@ -257,6 +257,81 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_clips: {
+        Row: {
+          aspect_ratio: string
+          created_at: string
+          duration: number
+          error_message: string | null
+          gateway_id: string | null
+          id: string
+          kind: string
+          progress: number
+          prompt: string
+          request_id: string
+          resolution: string
+          status: string
+          storage_path: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aspect_ratio: string
+          created_at?: string
+          duration: number
+          error_message?: string | null
+          gateway_id?: string | null
+          id?: string
+          kind: string
+          progress?: number
+          prompt: string
+          request_id: string
+          resolution: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aspect_ratio?: string
+          created_at?: string
+          duration?: number
+          error_message?: string | null
+          gateway_id?: string | null
+          id?: string
+          kind?: string
+          progress?: number
+          prompt?: string
+          request_id?: string
+          resolution?: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      studio_service_state: {
+        Row: {
+          id: string
+          message: string
+          provider_denied: boolean
+          status: number
+        }
+        Insert: {
+          id: string
+          message: string
+          provider_denied?: boolean
+          status: number
+        }
+        Update: {
+          id?: string
+          message?: string
+          provider_denied?: boolean
+          status?: number
+        }
+        Relationships: []
+      }
       token_balances: {
         Row: {
           balance: number
@@ -432,6 +507,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_studio_clip: { Args: { _id: string }; Returns: boolean }
       deduct_tokens: {
         Args: {
           _action_type: string

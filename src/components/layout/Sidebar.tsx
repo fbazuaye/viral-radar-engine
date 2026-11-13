@@ -19,6 +19,7 @@ import {
   Zap,
   Shield,
   BarChart3,
+  Clapperboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/useAdminUsers";
@@ -32,6 +33,7 @@ const navItems = [
   { to: "/idea-generator", label: "Idea Generator", icon: Lightbulb },
   { to: "/competitors", label: "Competitors", icon: Users },
   { to: "/thumbnails", label: "Thumbnails", icon: Image },
+  { to: "/clip-studio", label: "B-Roll & Clip Studio", icon: Clapperboard },
   { to: "/feed", label: "Creator Feed", icon: Rss },
   { to: "/scripts", label: "Script Generator", icon: FileText },
   { to: "/description", label: "Description", icon: AlignLeft },

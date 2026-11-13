@@ -1,0 +1,3 @@
+# Architecture rules
+- Video Studio uses owner-scoped durable jobs and private storage; a server-side claim function serializes Gemini jobs and persists service pauses to prevent duplicate generation and blocked background calls.
+- Video Studio request validation and Gemini request construction live together in its function's contract module, imported by focused tests so both supported aspect ratios are enforced end to end.

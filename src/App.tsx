@@ -19,6 +19,7 @@ const TitleOptimizer = lazy(() => import("./pages/TitleOptimizer"));
 const IdeaGenerator = lazy(() => import("./pages/IdeaGenerator"));
 const Competitors = lazy(() => import("./pages/Competitors"));
 const Thumbnails = lazy(() => import("./pages/Thumbnails"));
+const ClipStudio = lazy(() => import("./pages/ClipStudio"));
 const CreatorFeed = lazy(() => import("./pages/CreatorFeed"));
 const ScriptGenerator = lazy(() => import("./pages/ScriptGenerator"));
 const DescriptionGenerator = lazy(() => import("./pages/DescriptionGenerator"));
@@ -62,6 +63,7 @@ const App = () => (
                 <Route path="/idea-generator" element={<Protected><IdeaGenerator /></Protected>} />
                 <Route path="/competitors" element={<Protected><Competitors /></Protected>} />
                 <Route path="/thumbnails" element={<Protected><Thumbnails /></Protected>} />
+                <Route path="/clip-studio" element={<Protected><ClipStudio /></Protected>} />
                 <Route path="/feed" element={<Protected><CreatorFeed /></Protected>} />
                 <Route path="/scripts" element={<Protected><ScriptGenerator /></Protected>} />
                 <Route path="/description" element={<Protected><DescriptionGenerator /></Protected>} />
