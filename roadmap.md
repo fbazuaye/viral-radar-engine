@@ -4,6 +4,6 @@
 - [x] Test format rules and verify signed-in landscape and portrait generation, saved previews, MP4 downloads, and mobile layout.
 
 # Longer Studio Videos
-- [ ] Expand duration choices from 30 seconds through 20 minutes with sequential Gemini scene generation.
-- [ ] Join scenes into a single saved MP4 with progress and safe paused-job handling.
-- [ ] Test duration boundaries and verify a real 30-second generation and download.
+- [x] Expand duration choices from 30 seconds through 20 minutes with sequential Gemini scene generation.
+- [x] Join scenes into a single saved MP4 with progress and safe paused-job handling.
+- [x] Test duration boundaries and verify a real 30-second generation and download. A full 20-minute generation was not run due to time and credit cost.
