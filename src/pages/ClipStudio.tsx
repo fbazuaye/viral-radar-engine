@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { extractEdgeFunctionError } from "@/lib/edgeFunctionError";
-import { Clip, isActiveClip } from "@/lib/clipStudio";
+import { Clip, isActiveClip, STUDIO_DURATIONS, durationLabel } from "@/lib/clipStudio";
 import { cn } from "@/lib/utils";
 import { useIsAdmin } from "@/hooks/useAdminUsers";
 
@@ -25,6 +25,8 @@ export default function ClipStudio() {
   const [clips, setClips] = useState<Clip[]>([]);
   const [selected, setSelected] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [joining, setJoining] = useState<string>();
+  const [joinProgress, setJoinProgress] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pollStopped, setPollStopped] = useState(false);
@@ -54,10 +56,11 @@ export default function ClipStudio() {
     try {
       const data = await call({ action: "create", request_id: crypto.randomUUID(), prompt, kind, aspect_ratio: ratio, duration, resolution });
       merge(data.clip); setSelected(data.clip.id); setPollStopped(false);
-    } catch (e) { setError(e instanceof Error ? e.message : "Unable to generate video."); await reload(); }
+    } catch (e) { await reload(); setError(e instanceof Error ? e.message : "Unable to generate video."); }
     finally { setBusy(false); }
   };
   const download = async (clip: Clip) => {
+    if (clip.download_url) { window.location.assign(clip.download_url); return; }
     if (!clip.video_url) return;
     try {
       const response = await fetch(clip.video_url);
@@ -66,6 +69,26 @@ export default function ClipStudio() {
       const link = document.createElement("a"); link.href = url; link.download = `ytradar-${clip.kind}-${clip.aspect_ratio.replace(":", "x")}.mp4`; link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) { setError(e instanceof Error ? e.message : "Download failed."); }
+  };
+  const join = async (clip: Clip) => {
+    if (!clip.scene_urls || joining) return;
+    setJoining(clip.id); setError("");
+    try {
+      const { assembleStudioVideo } = await import("@/lib/assembleStudioVideo");
+      const blob = await assembleStudioVideo(clip.scene_urls, clip.duration, setJoinProgress);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Please sign in again.");
+      setJoinProgress("Saving joined video…");
+      const path = `${user.id}/${clip.id}/assembled.mp4`;
+      const { data: existing, error: listError } = await supabase.storage.from("studio-clips").list(`${user.id}/${clip.id}`, { search: "assembled.mp4" });
+      if (listError) throw listError;
+      if (!existing?.some(file => file.name === "assembled.mp4")) {
+        const { error: uploadError } = await supabase.storage.from("studio-clips").upload(path, blob, { contentType: "video/mp4" });
+        if (uploadError) throw uploadError;
+      }
+      const data = await call({ action: "finalize", id: clip.id }); merge(data.clip);
+    } catch (e) { setError(e instanceof Error ? e.message : "Unable to join video. Your scenes are saved."); }
+    finally { setJoining(undefined); setJoinProgress(""); }
   };
   return <div className="mx-auto max-w-6xl space-y-8">
     <header className="flex flex-wrap items-center justify-between gap-3">
@@ -77,15 +100,16 @@ export default function ClipStudio() {
         <div className="flex gap-2" aria-label="Video type">{(["b-roll", "clip"] as const).map(value => <Button key={value} type="button" variant={kind === value ? "secondary" : "ghost"} aria-pressed={kind === value} onClick={() => setKind(value)}><Film />{value === "b-roll" ? "B-Roll" : "Short Clip"}</Button>)}</div>
         <div className="space-y-2"><Label htmlFor="scene">Scene</Label><Textarea id="scene" value={prompt} onChange={e => setPrompt(e.target.value)} maxLength={4000} rows={7} placeholder="A slow tracking shot through a sunlit coffee shop, steam rising from a fresh espresso. Warm morning light, natural café sounds." /><p className="text-right text-xs text-muted-foreground">{prompt.length.toLocaleString()} / 4,000</p></div>
         <fieldset className="space-y-2"><legend className="mb-2 text-sm font-medium">Format</legend><div className="grid grid-cols-2 gap-3">{(["16:9", "9:16"] as const).map(value => <Button className="h-16 flex-col gap-1" type="button" key={value} variant={ratio === value ? "default" : "outline"} aria-pressed={ratio === value} onClick={() => setRatio(value)}>{value === "16:9" ? <Monitor /> : <Smartphone />}{value} · {value === "16:9" ? "Landscape" : "Portrait"}</Button>)}</div></fieldset>
-        <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="duration">Duration</Label><select id="duration" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={duration} onChange={e => setDuration(Number(e.target.value))}>{Array.from({ length: 8 }, (_, i) => i + 3).map(n => <option key={n} value={n}>{n} seconds</option>)}</select></div><div className="space-y-2"><Label htmlFor="resolution">Resolution</Label><select id="resolution" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={resolution} onChange={e => setResolution(e.target.value)}>{["360p", "720p", "1080p"].map(n => <option key={n}>{n}</option>)}</select></div></div>
+        <div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="duration">Duration</Label><select id="duration" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={duration} onChange={e => setDuration(Number(e.target.value))}>{STUDIO_DURATIONS.map(n => <option key={n} value={n}>{durationLabel(n)}</option>)}</select></div><div className="space-y-2"><Label htmlFor="resolution">Resolution</Label><select id="resolution" className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={resolution} onChange={e => setResolution(e.target.value)}>{["360p", "720p", "1080p"].map(n => <option key={n}>{n}</option>)}</select></div></div>
         <Button type="submit" className="w-full" disabled={busy || Boolean(active) || prompt.trim().length < 5}>{busy ? <Loader2 className="animate-spin" /> : <Sparkles />}{busy ? "Submitting…" : active ? "Generation in progress" : "Generate video"}</Button>
-        <p className="text-xs text-muted-foreground">Uses workspace AI credits. Generated clips include audio.</p>
+        <p className="text-xs text-muted-foreground">Uses workspace AI credits. Generated clips include audio.{duration > 10 && ` ${Math.ceil(duration / 10)} scenes will be generated. Keep this page open; longer videos take more time and credits.`}</p>
       </form>
       <section className="min-w-0 space-y-3" aria-label="Clip preview">
-        <div className="flex items-center justify-between"><h2 className="font-display font-semibold">Preview</h2>{current && <span className="text-xs text-muted-foreground">{current.aspect_ratio} · {current.duration}s · {current.resolution}</span>}</div>
+        <div className="flex items-center justify-between"><h2 className="font-display font-semibold">Preview</h2>{current && <span className="text-xs text-muted-foreground">{current.aspect_ratio} · {durationLabel(current.duration)} · {current.resolution}</span>}</div>
         <div className={cn("flex items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/40", current?.aspect_ratio === "9:16" ? "aspect-[9/16] max-h-[560px] mx-auto" : "aspect-video")}>
-          {current?.video_url ? <video key={current.video_url} src={current.video_url} controls playsInline preload="metadata" className="h-full w-full object-contain" /> : <div className="space-y-3 px-6 text-center">{current && isActiveClip(current) ? <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" /> : <Film className="mx-auto h-12 w-12 text-muted-foreground" />}<p className="text-sm text-muted-foreground">{loading ? "Loading clips…" : current?.status === "failed" ? current.error_message : current && isActiveClip(current) ? current.status === "queued" ? "Queued" : `Generating${current.progress ? ` · ${current.progress}%` : "…"}` : "No clip selected"}</p></div>}
+          {current?.video_url ? <video key={current.video_url} src={current.video_url} controls playsInline preload="metadata" className="h-full w-full object-contain" /> : <div className="space-y-3 px-6 text-center">{current && isActiveClip(current) ? <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" /> : <Film className="mx-auto h-12 w-12 text-muted-foreground" />}<p className="text-sm text-muted-foreground">{loading ? "Loading clips…" : current?.status === "assembling" ? joining === current.id ? joinProgress : "Scenes ready to join" : current?.status === "failed" ? current.error_message : current && isActiveClip(current) ? current.status === "queued" ? "Queued" : `Generating · ${current.completed_seconds || 0} / ${current.duration} seconds · ${current.progress}%` : "No clip selected"}</p></div>}
         </div>
+        {current?.status === "assembling" && <Button variant="outline" disabled={Boolean(joining)} onClick={() => void join(current)}>{joining ? <Loader2 className="animate-spin" /> : <Film />}{joining ? "Joining…" : "Join & save video"}</Button>}
         {current?.video_url && <Button variant="outline" onClick={() => void download(current)}><Download />Download MP4</Button>}
       </section>
     </div>
@@ -94,7 +118,7 @@ export default function ClipStudio() {
       {!loading && !clips.length && <p className="text-sm text-muted-foreground">No saved clips yet.</p>}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{clips.map(clip => <article key={clip.id} className={cn("overflow-hidden rounded-lg border bg-card", current?.id === clip.id ? "border-primary" : "border-border")}>
         {clip.video_url && <video src={clip.video_url} muted playsInline preload="metadata" className="aspect-video w-full bg-muted object-contain" />}
-        <div className="space-y-3 p-4"><p className="line-clamp-2 text-sm font-medium">{clip.prompt}</p><p className="text-xs text-muted-foreground">{clip.aspect_ratio} · {clip.duration}s · {clip.resolution} · {clip.status.replace("_", " ")}</p><div className="flex gap-2"><Button variant="secondary" size="sm" onClick={() => setSelected(clip.id)}>View clip</Button>{clip.video_url && <Button variant="ghost" size="icon" aria-label="Download clip" title="Download clip" onClick={() => void download(clip)}><Download /></Button>}</div></div>
+        <div className="space-y-3 p-4"><p className="line-clamp-2 text-sm font-medium">{clip.prompt}</p><p className="text-xs text-muted-foreground">{clip.aspect_ratio} · {durationLabel(clip.duration)} · {clip.resolution} · {clip.status.replace("_", " ")}</p><div className="flex gap-2"><Button variant="secondary" size="sm" onClick={() => setSelected(clip.id)}>View clip</Button>{clip.video_url && <Button variant="ghost" size="icon" aria-label="Download clip" title="Download clip" onClick={() => void download(clip)}><Download /></Button>}</div></div>
       </article>)}</div>
     </section>
   </div>;
