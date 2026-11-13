@@ -15,6 +15,13 @@
       "when": 1794567969438,
       "tag": "0001_long_studio_videos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794583142721,
+      "tag": "0002_tighten_visits_and_thumbnail_uploads",
+      "breakpoints": true
     }
   ]
 }
