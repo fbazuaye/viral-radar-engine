@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Clapperboard, Download, Film, Loader2, Monitor, Smartphone, Sparkles, RefreshCw } from "lucide-react";
+import { Clapperboard, Download, Film, Loader2, Monitor, Smartphone, Sparkles, RefreshCw, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -59,6 +59,12 @@ export default function ClipStudio() {
     } catch (e) { await reload(); setError(e instanceof Error ? e.message : "Unable to generate video."); }
     finally { setBusy(false); }
   };
+  const remix = (clip: Clip) => {
+    setPrompt(clip.prompt); setKind(clip.kind as "b-roll" | "clip"); setRatio(clip.aspect_ratio as "16:9" | "9:16");
+    setDuration(clip.duration); setResolution(clip.resolution);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => document.getElementById("scene")?.focus(), 300);
+  };
   const download = async (clip: Clip) => {
     if (clip.download_url) { window.location.assign(clip.download_url); return; }
     if (!clip.video_url) return;
@@ -111,7 +117,7 @@ export default function ClipStudio() {
           {current?.video_url ? <video key={current.video_url} src={current.video_url} controls playsInline preload="metadata" className="h-full w-full object-contain" /> : <div className="space-y-3 px-6 text-center">{current && isActiveClip(current) ? <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" /> : <Film className="mx-auto h-12 w-12 text-muted-foreground" />}<p className="text-sm text-muted-foreground">{loading ? "Loading clips…" : current?.status === "assembling" ? joining === current.id ? joinProgress : "Scenes ready to join" : current?.status === "failed" ? current.error_message : current && isActiveClip(current) ? current.status === "queued" ? "Queued" : `Generating · ${current.completed_seconds || 0} / ${current.duration} seconds · ${current.progress}%` : "No clip selected"}</p></div>}
         </div>
         {current?.status === "assembling" && <Button variant="outline" disabled={Boolean(joining)} onClick={() => void join(current)}>{joining ? <Loader2 className="animate-spin" /> : <Film />}{joining ? "Joining…" : "Join & save video"}</Button>}
-        {current?.video_url && <Button variant="outline" onClick={() => void download(current)}><Download />Download MP4</Button>}
+        <div className="flex flex-wrap gap-2">{current?.video_url && <Button variant="outline" onClick={() => void download(current)}><Download />Download MP4</Button>}{current && !isActiveClip(current) && <Button variant="outline" onClick={() => remix(current)}><Wand2 />Remix & refine</Button>}</div>
       </section>
     </div>
     {error && <div role="alert" className="border-l-2 border-destructive bg-destructive/10 p-4 text-sm space-y-3"><p>{error}</p><div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => void reload()}><RefreshCw />Refresh clips</Button>{isAdmin && <Button variant="outline" size="sm" onClick={async () => { try { await call({ action: "resume" }); setError(""); setPollStopped(false); } catch (e) { setError(e instanceof Error ? e.message : "Cannot resume."); } }}>Resume after restoring access</Button>}</div></div>}
@@ -119,7 +125,7 @@ export default function ClipStudio() {
       {!loading && !clips.length && <p className="text-sm text-muted-foreground">No saved clips yet.</p>}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{clips.map(clip => <article key={clip.id} className={cn("overflow-hidden rounded-lg border bg-card", current?.id === clip.id ? "border-primary" : "border-border")}>
         {clip.video_url && <video src={clip.video_url} muted playsInline preload="metadata" className="aspect-video w-full bg-muted object-contain" />}
-        <div className="space-y-3 p-4"><p className="line-clamp-2 text-sm font-medium">{clip.prompt}</p><p className="text-xs text-muted-foreground">{clip.aspect_ratio} · {durationLabel(clip.duration)} · {clip.resolution} · {clip.status.replace("_", " ")}</p><div className="flex gap-2"><Button variant="secondary" size="sm" onClick={() => setSelected(clip.id)}>View clip</Button>{clip.video_url && <Button variant="ghost" size="icon" aria-label="Download clip" title="Download clip" onClick={() => void download(clip)}><Download /></Button>}</div></div>
+        <div className="space-y-3 p-4"><p className="line-clamp-2 text-sm font-medium">{clip.prompt}</p><p className="text-xs text-muted-foreground">{clip.aspect_ratio} · {durationLabel(clip.duration)} · {clip.resolution} · {clip.status.replace("_", " ")}</p><div className="flex gap-2"><Button variant="secondary" size="sm" onClick={() => setSelected(clip.id)}>View clip</Button><Button variant="ghost" size="sm" onClick={() => remix(clip)}><Wand2 />Remix</Button>{clip.video_url && <Button variant="ghost" size="icon" aria-label="Download clip" title="Download clip" onClick={() => void download(clip)}><Download /></Button>}</div></div>
       </article>)}</div>
     </section>
   </div>;
