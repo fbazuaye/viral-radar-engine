@@ -2,3 +2,4 @@
 - Video Studio uses owner-scoped durable jobs and private storage; a server-side claim function serializes Gemini jobs and persists service pauses to prevent duplicate generation and blocked background calls.
 - Video Studio request validation and Gemini request construction live together in its function's contract module, imported by focused tests so both supported aspect ratios are enforced end to end.
 - Long studio videos store completed scene paths and progress durably, advance one scene per leased invocation, and assemble with single-thread FFmpeg in the browser to avoid Cloud function timeouts; existing short-video duration contracts remain compatible.
+- Chart colors come from `useChartColors` (src/lib/chartColors.ts), which reads the active theme's CSS custom properties into concrete values; SVG `fill`/`stroke`/`stop-color` presentation attributes do not resolve `var()`, so passing `var(...)` or `hsl(var(...))` straight to a chart library renders black.
