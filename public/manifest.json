@@ -4,8 +4,8 @@
   "description": "AI-Powered YouTube Creator Intelligence Platform",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0f1117",
-  "theme_color": "#7c3aed",
+  "background_color": "#121212",
+  "theme_color": "#e6142b",
   "orientation": "any",
   "icons": [
     {

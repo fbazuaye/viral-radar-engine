@@ -12,6 +12,7 @@ import {
 import { Globe, Monitor, Eye, Users, MapPin, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, subDays, startOfDay } from "date-fns";
+import { useChartColors } from "@/lib/chartColors";
 
 interface Visit {
   id: string;
@@ -25,17 +26,9 @@ interface Visit {
   created_at: string;
 }
 
-const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--accent))",
-  "hsl(142 76% 36%)",
-  "hsl(38 92% 50%)",
-  "hsl(280 65% 60%)",
-  "hsl(200 70% 50%)",
-];
-
 const AdminAnalytics = () => {
   const navigate = useNavigate();
+  const colors = useChartColors();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,18 +195,18 @@ const AdminAnalytics = () => {
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={dailyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="date" fontSize={11} tick={{ fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis fontSize={11} tick={{ fill: "hsl(var(--muted-foreground))" }} />
+              <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+              <XAxis dataKey="date" fontSize={11} tick={{ fill: colors.muted }} />
+              <YAxis fontSize={11} tick={{ fill: colors.muted }} />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: colors.card,
+                  border: `1px solid ${colors.border}`,
                   borderRadius: 8,
-                  color: "hsl(var(--foreground))",
+                  color: colors.popoverForeground,
                 }}
               />
-              <Line type="monotone" dataKey="visits" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="visits" stroke={colors.primary} strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
@@ -226,18 +219,18 @@ const AdminAnalytics = () => {
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={pageData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" fontSize={11} tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis dataKey="page" type="category" fontSize={11} width={120} tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={colors.border} />
+                <XAxis type="number" fontSize={11} tick={{ fill: colors.muted }} />
+                <YAxis dataKey="page" type="category" fontSize={11} width={120} tick={{ fill: colors.muted }} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: colors.card,
+                    border: `1px solid ${colors.border}`,
                     borderRadius: 8,
-                    color: "hsl(var(--foreground))",
+                    color: colors.popoverForeground,
                   }}
                 />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" fill={colors.primary} radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -253,7 +246,7 @@ const AdminAnalytics = () => {
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
                     <Pie data={deviceData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} fontSize={10}>
-                      {deviceData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      {deviceData.map((_, i) => <Cell key={i} fill={colors.series[i % colors.series.length]} />)}
                     </Pie>
                     <Tooltip />
                   </PieChart>
@@ -264,7 +257,7 @@ const AdminAnalytics = () => {
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
                     <Pie data={browserData} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} fontSize={10}>
-                      {browserData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      {browserData.map((_, i) => <Cell key={i} fill={colors.series[i % colors.series.length]} />)}
                     </Pie>
                     <Tooltip />
                   </PieChart>

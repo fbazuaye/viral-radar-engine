@@ -1,6 +1,7 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useMemo } from "react";
 import { format, parseISO } from "date-fns";
+import { useChartColors } from "@/lib/chartColors";
 
 interface Video {
   published_at: string | null;
@@ -13,6 +14,8 @@ interface EngagementChartProps {
 }
 
 export const EngagementChart = ({ videos }: EngagementChartProps) => {
+  const colors = useChartColors();
+
   const data = useMemo(() => {
     if (!videos.length) return [];
     // Group by day, show last 7 data points
@@ -47,28 +50,28 @@ export const EngagementChart = ({ videos }: EngagementChartProps) => {
           <AreaChart data={data}>
             <defs>
               <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0} />
+                <stop offset="5%" style={{ stopColor: colors.primary }} stopOpacity={0.3} />
+                <stop offset="95%" style={{ stopColor: colors.primary }} stopOpacity={0} />
               </linearGradient>
               <linearGradient id="likesGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(168, 76%, 42%)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(168, 76%, 42%)" stopOpacity={0} />
+                <stop offset="5%" style={{ stopColor: colors.accent }} stopOpacity={0.3} />
+                <stop offset="95%" style={{ stopColor: colors.accent }} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 14%, 89%)" opacity={0.3} />
-            <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="hsl(220, 10%, 46%)" />
-            <YAxis tick={{ fontSize: 12 }} stroke="hsl(220, 10%, 46%)" />
+            <CartesianGrid strokeDasharray="3 3" stroke={colors.border} opacity={0.3} />
+            <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke={colors.muted} />
+            <YAxis tick={{ fontSize: 12 }} stroke={colors.muted} />
             <Tooltip
               contentStyle={{
-                background: "hsl(224, 25%, 10%)",
-                border: "1px solid hsl(224, 20%, 16%)",
+                background: colors.popover,
+                border: `1px solid ${colors.border}`,
                 borderRadius: "8px",
-                color: "hsl(220, 14%, 92%)",
+                color: colors.popoverForeground,
                 fontSize: 12,
               }}
             />
-            <Area type="monotone" dataKey="views" stroke="hsl(262, 83%, 58%)" fill="url(#viewsGrad)" strokeWidth={2} />
-            <Area type="monotone" dataKey="likes" stroke="hsl(168, 76%, 42%)" fill="url(#likesGrad)" strokeWidth={2} />
+            <Area type="monotone" dataKey="views" stroke={colors.primary} fill="url(#viewsGrad)" strokeWidth={2} />
+            <Area type="monotone" dataKey="likes" stroke={colors.accent} fill="url(#likesGrad)" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
